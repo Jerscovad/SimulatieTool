@@ -14,10 +14,8 @@ _____
    * [calc_toal functie](https://github.com/Jerscovad/SimulatieTool#calc_total-functie)
 3. [De Train functie](https://github.com/Jerscovad/SimulatieTool#de-train-functie)
 4. [De Grafische User Interface (GUI)](https://github.com/Jerscovad/SimulatieTool#de-grafische-user-interface-gui)
-5. 
-6.
-7.
-8.
+5. [Installatie Handleiding](https://github.com/Jerscovad/SimulatieTool#installatie-handleiding)
+6. [Gebruiks Handleiding](https://github.com.Jerscovad/SimulatieTool#gebruiks-handleiding)
 
 ## Vooraf
 Deze tool is volledig geschreven in [Python](https://www.python.org/) (support vanaf versie 3.6) en maakt onder andere gebruik van de [numpy](https://numpy.org/), [pandas](https://pandas.pydata.org/), [wxPython](https://wxpython.org/), [matplotlib](https://matplotlib.org/) libraries. Andere libraries die worden gebruikt zullen indien nodig worden toegelicht. De calculaties/berekeningen die worden gedaan zijn gebaseerd op matlab en simulink [scripts en simulaties](https://github.com/Jerscovad/SimulatieTool/tree/master/Matlab).
@@ -36,25 +34,26 @@ Voor het simuleren met data afkomsten van Schiphol over het jaar 2016 wordt het 
 ```python
 Sim_schiphol = Simulator(Location('schiphol'),'2016', Windturbine(5))
 ```
-In de [__init__ functie](https://github.com/Jerscovad/SimulatieTool/blob/master/src/simulator.py#L22) is te zien dat er meer parameters kunnen worden meegegeven maar deze zijn als [default parameter](https://docs.python.org/2.0/ref/function.html) gedefinieerd dus hoeft het in dit geval niet.
+
+In de [__init__](https://github.com/Jerscovad/SimulatieTool/blob/master/src/simulator.py#L22) functie is te zien dat er meer parameters kunnen worden meegegeven maar deze zijn als [default parameter](https://docs.python.org/2.0/ref/function.html) gedefinieerd dus hoeft het in dit geval niet meegegeven te worden.
 
 ### De attributen
 De atributen zijn variabelen die nodig zijn ter ondersteuning van de functies. Deze worden ingevoerd door de gebruiker of worden uit een data bestand uitgelezen.
 Korte omschrijving van ieder atribuut:
-- Location: Locatie object dat verschillende locatie specifieke informatie bevat. Zie [Location klasse](https://github.com/Jerscovad/SimulatieTool/blob/master/src/location.py "Location object")
-- year: Het jaar waar de weer data op is gebasseerd. Wordt ingevoerd.
-- latitude: Coördinaat van de locatie waar het om gaat. Wordt uit het Locatie object uitgelezen tenzij een waarde wordt ingevoerd.
-- longitude: idem latitude.
-- terrain_factor: terreingesteldheidsfactor die wordt gebruikt bij wind vermoge/energie berekening. Wordt uit het locatie object uitgelezen tenzij een waarde wordt ingevoerd.
-- Windturbine: Windturbine object die informatie over de windturbine bevat. Zie [Windturbine klasse](https://github.com/Jerscovad/SimulatieTool/blob/master/src/generators.py)
-- import_data: bevat alle geimporteerde weerdata nodig voor de berekeningen. De data wordt bij initialisatie uitgelezen.
-- ghi: Globale horizontale straling. Gebruikt bij de zonne vermogen/energie berekening. Komt uit de import data.
-- dni: Direkte neerwaardse straling. Gebruikt bij de zonne vermoge/energie berekening. Komt uit de import data.
-- dates: Datum informatie die bij de weerdata hoort. Komt uit de import data.
-- doy: Day of year. Gebruikt bij de zonne vermoge/energie berekening. Wordt gehaald uit de dates variabele.
-- time: Uur van de dag. Gebruikt bij de zonne vermoge/energie berekening. Komt uit de import data.
-- wind_speed: Gemeten windsnelheid gebruikt voor de wind vermoge/energie berekening. Komt uit de import data.
-- temperature: Gemeten temperatuur. Komt uit de import data. Wordt voor nu niet gebruikt.
+- **Location:** Locatie object dat verschillende locatie specifieke informatie bevat. Zie [Location klasse](https://github.com/Jerscovad/SimulatieTool/blob/master/src/location.py "Location object")
+- **year:** Het jaar waar de weer data op is gebasseerd. Wordt ingevoerd.
+- **latitude:** Coördinaat van de locatie waar het om gaat. Wordt uit het Locatie object uitgelezen tenzij een waarde wordt ingevoerd.
+- **longitude:** idem latitude.
+- **terrain_factor:** terreingesteldheidsfactor die wordt gebruikt bij wind vermoge/energie berekening. Wordt uit het locatie object uitgelezen tenzij een waarde wordt ingevoerd.
+- **Windturbine:** Windturbine object die informatie over de windturbine bevat. Zie [Windturbine klasse](https://github.com/Jerscovad/SimulatieTool/blob/master/src/generators.py)
+- **import_data:** bevat alle geimporteerde weerdata nodig voor de berekeningen. De data wordt bij initialisatie uitgelezen.
+- **ghi:** Globale horizontale straling. Gebruikt bij de zonne vermogen/energie berekening. Komt uit de import data.
+- **dni:** Direkte neerwaardse straling. Gebruikt bij de zonne vermoge/energie berekening. Komt uit de import data.
+- **dates:** Datum informatie die bij de weerdata hoort. Komt uit de import data.
+- **doy:** Day of year. Gebruikt bij de zonne vermoge/energie berekening. Wordt gehaald uit de dates variabele.
+- **time:** Uur van de dag. Gebruikt bij de zonne vermoge/energie berekening. Komt uit de import data.
+- **wind_speed:** Gemeten windsnelheid gebruikt voor de wind vermoge/energie berekening. Komt uit de import data.
+- **temperature:** Gemeten temperatuur. Komt uit de import data. Wordt voor nu niet gebruikt.
 
 ### De functies
 De Simulatie klasse bevat drie functies.
@@ -81,10 +80,10 @@ De functie berkend het vermogen en de energie voor de zonnepanelen en 'returned'
 Momenteel kan de functie alleen worden uitgevoerd met vier opstellingen. Bij minder dan vier kan 0 worden meegegeven als input van de resterende opstellingen.
 
 Stel je wilt dus het vermogen(power) en energie(energy) van de volgende opstellingen:
-100m met een hoek van 50 graden naar het zuiden gericht.
-200m met een hoek van 45 graden naar het oosten gericht.
-300m met een hoek van 30 graden naar het westen gericht.
-400m met een hoek van 25 graden naar het zuid-westen gericht.
+ * 100m met een hoek van 50 graden naar het zuiden gericht.
+ * 200m met een hoek van 45 graden naar het oosten gericht.
+ * 300m met een hoek van 30 graden naar het westen gericht.
+ * 400m met een hoek van 25 graden naar het zuid-westen gericht.
 
 Onderstaande code zet dan de som van de vier opstellingen in de `power` en `energy` variabelen.
 ```python
@@ -117,13 +116,25 @@ Combinatie van de twee bovenstaande zou worden:
 total_power,total_energy = Sim_schiphol.calc_total([100, 50, 0, 200, 45, -90, 300, 30, 90, 400, 25, 45],[5, 100], 16)
 ```
 
+De grootte van de numpy arrays (power en energy) die uit de functies afkomstig zijn, is afhankelijk van de grootte van de input data. De huidige input data is geformatteerd op een jaar uitgezet in uren dus iedere output zal 8760 data punten bevatten.
+
+
 _____
 
 ## De Train functie
 
+
 _____
 
 ## De Grafische User Interface (GUI)
+
+_____
+
+## Installatie Handleiding
+
+_____
+
+## Gebruiks Handleiding
 
 _____
 
