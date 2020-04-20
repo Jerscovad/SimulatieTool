@@ -3,27 +3,36 @@
 Deze tool is gemaakt om te simuleren (berekenen) wat voor vermogen en energie gepaard gaat met gegeven weersgegevens(data).
 
 ## In het kort
-De simulatietool bestaad uit twee delen/functies. Een Simulatie functie en een Train functie elke met hun eigen tabje in het tooltje. De Train functie is een wat uitgebreidere functie die door middel van een genetisch algoritme (GA) de optimale uikomst probeert te bereiken.
+De simulatietool bestaat uit twee delen/functies. Een Simulatie functie en een Train functie elke met hun eigen tabje in het tooltje. De Train functie is een wat uitgebreidere functie die door middel van een genetisch algoritme (GA) de optimale uikomst probeert te bereiken.
 De gehele tool is in Python geschreven.
 
 _____
 
 ## Inhoudsopgave
-1. [De Simulatie functie](https://github.com/Jerscovad/SimulatieTool#de-simulatie-functie "De Simulatie functie")
-  *     [De attributen](https://github.com/ "De attributen")
-  *     [De functies](https://github.com/ "De functies")
-  *     [calc_solar functie](https://github.com/ "calc_colar")
-3.
-4.
+1. [Vooraf]
+2. [De Simulatie functie](https://github.com/Jerscovad/SimulatieTool#de-simulatie-functie)
+  * [De attributen](https://github.com/Jerscovad/SimulatieTool#de-attributen)
+  * [De functies](https://github.com/Jerscovad/SimulatieTool#de-functies)
+  * [calc_solar functie](https://github.com/Jerscovad/SimulatieTool#calc_solar-functie)
+  * [calc_wind functie](https://github.com/Jerscovad/SimulatieTool#calc_wind-functie)
+  * [calc_toal functie](https://github.com/Jerscovad/SimulatieTool#calc_total-functie)
+3. [De Train functie](https://github.com/Jerscovad/SimulatieTool#de-train-functie)
+4. [De Grafische User Interface (GUI)](https://github.com/Jerscovad/SimulatieTool#de-grafische-user-interface-gui)
 5.
 6.
 7.
 8.
 
+## Vooraf
+Deze tool is volledig geschreven in [Python](https://www.python.org/) (vanaf versie 3.6) en maakt onder andere gebruik van de [numpy](https://numpy.org/), [pandas](https://pandas.pydata.org/), [wxPython](https://wxpython.org/), [matplotlib](https://matplotlib.org/) libraries. Andere libraries die worden gebruikt zullen indien nodig worden toegelicht. De calculaties/berekeningen die worden gedaan zijn gebaseerd op matlab en simulink [scripts en simulaties]().
+
+
+_____
 
 ## De Simulatie functie
 
 De Simulatie functie is de basis waarop de tool is gebouwd. Het is ondergracht in zijn eigen klasse met functies. In de onderstaande diagram is te zien hoe de klasse is opgebouwd.
+![Simulator class](https://github.com/Jerscovad/SimulatieTool/blob/master/images/design/Simulator_classe.png)
 
 ### De attributen
 De atributen zijn variabelen die nodig zijn ter ondersteuning van de functies. Deze worden ingevoerd door de gebruiker of worden uit een data bestand uitgelezen.
@@ -50,20 +59,22 @@ De Simulatie klasse bevat drie functies.
 - calc_total
 
 #### calc_solar functie
-Deze functie berekend het vermogen en de energie van zonnepanelen aande hand van ingevoerde variabelen.
+Deze functie berekend het vermogen en de energie van zonnepanelen aan de hand van ingevoerde variabelen.
 Naast de bovengenoemde ondersteunende attributen heeft deze functie ook nodig: 
 
-* Az(Azimuth): De orientatie van de zonnepanelen in graden.
+* Az(Azimuth): De oriëntatie van de zonnepanelen in graden.
   * Zuid = 0
-  * Noord = 180
   * West = 90
   * Oost = -90
+  * Noord = 180
 * Inc (Inclination): De hoek van de zonnepanelen in graden.
 * sp_area: De oppervlakte van de zonnepanelen in vierkante meter.
 * sp_eff(efficiency): De efficiëntie van de zonnepanelen in procenten.
 * gref: ...Wordt in de berekening wel gebruikt maar is altijd 0...
 
-De functie berkend het vermogen en de energie voor de zonnepanelen en 'returned' deze in twee aparte variabelen. Dit kan momenteel alleen met vier opstellingen per keer.
+De functie berkend het vermogen en de energie voor de zonnepanelen en 'returned' deze in twee aparte [numpy arrays](https://numpy.org/doc/stable/reference/generated/numpy.array.html?highlight=array#numpy.array). De grootte van deze arrays is afhankelijk van de weerdata die als input wordt meegegeven.
+
+Momenteel kan de functie alleen worden uitgevoerd met vier opstellingen. Bij minder dan vier kan 0 worden meegegeven als input van de resterende opstellingen.
 
 Stel je wilt dus het vermogen(power) en energie(energy) van de volgende opstellingen:
 100m met een hoek van 50 graden naar het zuiden gericht.
@@ -73,16 +84,29 @@ Stel je wilt dus het vermogen(power) en energie(energy) van de volgende opstelli
 
 Onderstaande code zet dan de som van de vier opstellingen in de `power` en `energy` variabelen.
 ```python
-power, energy = Simulator.calc_solar(Az=[0, -90, 90, 45], Inc=[50, 45, 30, 25], 
-                                     sp_area=[100, 200, 300, 400], sp_eff=16, gref=0)
+power,energy = Simulator.calc_solar(Az=[0, -90, 90, 45],Inc=[50, 45, 30, 25],
+                                     sp_area=[100, 200, 300, 400],sp_eff=16,gref=0)
 ```
-Aangezien de `sp_eff` en `gref` altijd 16 en 0 zijn, zijn ze als default argument gedefiniëerd dus kan bovenstaande ook als volgt worden geschreven:
+Aangezien de `sp_eff` en `gref` altijd 16 en 0 respectievelijk zijn, zijn ze als default argument gedefiniëerd en kan bovenstaande ook als volgt worden geschreven:
 
 ```python
-power, energy = Simulator.calc_solar(Az=[0, -90, 90, 45], Inc=[50, 45, 30, 25], sp_area=[100, 200, 300, 400])
+power,energy = Simulator.calc_solar(Az=[0, -90, 90, 45],Inc=[50, 45, 30, 25],sp_area=[100, 200, 300, 400])
 ```
 
 #### calc_wind functie
+Deze functie berekend het vermogen en de energie van zonnepanelen aan de hand van ingevoerde variabelen.
+De functie heeft als input nodig:
+* n_turbines: De hoeveelheid windturbines in de configuratie.
+* rotor_height: De hoogte van de rotor as
+
+Stel je wilt het vermogen van vijf windturbines met een rotor as hoogte van 100m berkenen.
+Onderstaande code zet de som van de vijf turbine vermogens en energie in de `power` en `energy` variabelen.
+```python
+power,energy = Simulator.calc_wind([5, 100])
+```
+
+#### calc_total functie
+Deze functie voert de `calc_solar` en `calc_wind` functies uit en telt de uitkomsten bij elkaar op.
 
 _____
 
