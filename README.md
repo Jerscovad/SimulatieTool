@@ -10,9 +10,9 @@ _____
 
 ## Inhoudsopgave
 1. [De Simulatie functie](https://github.com/Jerscovad/SimulatieTool#de-simulatie-functie "De Simulatie functie")
-..* [De attributen](https://github.com/ "De attributen")
-..* [De functies](https://github.com/ "De functies")
-...* [calc_solar functie](https://github.com/ "calc_colar")
+⋅⋅* [De attributen](https://github.com/ "De attributen")
+⋅⋅* [De functies](https://github.com/ "De functies")
+⋅⋅* [calc_solar functie](https://github.com/ "calc_colar")
 3.
 4.
 5.
@@ -54,10 +54,10 @@ Deze functie berekend het vermogen en de energie van zonnepanelen aande hand van
 Naast de bovengenoemde ondersteunende attributen heeft deze functie ook nodig: 
 
 * Az(Azimuth): De orientatie van de zonnepanelen in graden.
-..* Zuid = 0
-..* Noord = 180
-..* West = 90
-..* Oost = -90
+⋅⋅* Zuid = 0
+⋅⋅* Noord = 180
+⋅⋅* West = 90
+⋅⋅* Oost = -90
 * Inc (Inclination): De hoek van de zonnepanelen in graden.
 * sp_area: De oppervlakte van de zonnepanelen in vierkante meter.
 * sp_eff(efficiency): De efficiëntie van de zonnepanelen in procenten.
