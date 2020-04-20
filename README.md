@@ -10,9 +10,9 @@ _____
 
 ## Inhoudsopgave
 1. [De Simulatie functie](https://github.com/Jerscovad/SimulatieTool#de-simulatie-functie "De Simulatie functie")
-  * [De attributen](https://github.com/ "De attributen")
-  * [De functies](https://github.com/ "De functies")
-  * [calc_solar functie](https://github.com/ "calc_colar")
+  *     [De attributen](https://github.com/ "De attributen")
+  *     [De functies](https://github.com/ "De functies")
+  *     [calc_solar functie](https://github.com/ "calc_colar")
 3.
 4.
 5.
