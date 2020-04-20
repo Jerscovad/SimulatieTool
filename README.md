@@ -59,7 +59,8 @@ Stel je wilt dus het vermogen(power) en energie(energy) van de volgende opstelli
 
 Onderstaande code zet dan de som van de vier opstellingen in de `power` en `energy` variabelen.
 ```python
-power, energy = Simulator.calc_solar(Az=[0, -90, 90, 45], Inc=[50, 45, 30, 25], sp_area=[100, 200, 300, 400], sp_eff=16, gref=0)
+power, energy = Simulator.calc_solar(Az=[0, -90, 90, 45], Inc=[50, 45, 30, 25], 
+                                     sp_area=[100, 200, 300, 400], sp_eff=16, gref=0)
 ```
 Aangezien de `sp_eff` en `gref` altijd 16 en 0 zijn, zijn ze als default argument gedefiniëerd dus kan bovenstaande ook als volgt worden geschreven:
 
