@@ -10,6 +10,16 @@ _____
 
 ## Inhoudsopgave
 1. [De Simulatie functie](https://github.com/Jerscovad/SimulatieTool#de-simulatie-functie "De Simulatie functie")
+..* [De attributen](https://github.com/ "De attributen")
+..* [De functies](https://github.com/ "De functies")
+...* [calc_solar functie](https://github.com/ "calc_colar")
+3.
+4.
+5.
+6.
+7.
+8.
+
 
 ## De Simulatie functie
 
@@ -39,15 +49,19 @@ De Simulatie klasse bevat drie functies.
 - calc_wind
 - calc_total
 
-### calc_solar
+#### calc_solar functie
 Deze functie berekend het vermogen en de energie van zonnepanelen aande hand van ingevoerde variabelen.
 Naast de bovengenoemde ondersteunende attributen heeft deze functie ook nodig: 
 
-- Az(Azimuth): De orientatie van de zonnepanelen in graden.
-- Inc (Inclination): De hoek van de zonnepanelen in graden.
-- sp_area: De oppervlakte van de zonnepanelen in vierkante meter.
-- sp_eff(efficiency): De efficiëntie van de zonnepanelen in procenten.
-- gref: ...Wordt in de berekening wel gebruikt maar is altijd 0...
+* Az(Azimuth): De orientatie van de zonnepanelen in graden.
+..* Zuid = 0
+..* Noord = 180
+..* West = 90
+..* Oost = -90
+* Inc (Inclination): De hoek van de zonnepanelen in graden.
+* sp_area: De oppervlakte van de zonnepanelen in vierkante meter.
+* sp_eff(efficiency): De efficiëntie van de zonnepanelen in procenten.
+* gref: ...Wordt in de berekening wel gebruikt maar is altijd 0...
 
 De functie berkend het vermogen en de energie voor de zonnepanelen en 'returned' deze in twee aparte variabelen. Dit kan momenteel alleen met vier opstellingen per keer.
 
@@ -68,7 +82,7 @@ Aangezien de `sp_eff` en `gref` altijd 16 en 0 zijn, zijn ze als default argumen
 power, energy = Simulator.calc_solar(Az=[0, -90, 90, 45], Inc=[50, 45, 30, 25], sp_area=[100, 200, 300, 400])
 ```
 
-### calc_wind
+#### calc_wind functie
 
 _____
 
