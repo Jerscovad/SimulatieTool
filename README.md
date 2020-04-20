@@ -27,7 +27,7 @@ _____
 
 ## De Simulatie functie
 
-De Simulatie functie is de basis waarop de tool is gebouwd. Het is ondergracht in zijn eigen [klasse](https://github.com/Jerscovad/SimulatieTool/blob/master/src/simulator.py) met functies. In de onderstaande diagram is te zien hoe de klasse is opgebouwd.
+De Simulatie functie is de basis waarop de tool is gebouwd. Het is ondergebracht in zijn eigen [klasse](https://github.com/Jerscovad/SimulatieTool/blob/master/src/simulator.py) met functies. In de onderstaande diagram is te zien hoe de klasse is opgebouwd.
 ![Simulator class](https://github.com/Jerscovad/SimulatieTool/blob/master/images/design/Simulator_classe.png)
 
 Voor het simuleren met data afkomsten van Schiphol over het jaar 2016 wordt het Simulatie object als volgt geinitialiseerd:
