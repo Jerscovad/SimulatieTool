@@ -122,7 +122,31 @@ De grootte van de numpy arrays (power en energy) die uit de functies afkomstig z
 _____
 
 ## De Train functie
+De train functie maakt gebruik van de Simulatie functie in combinatie met een gentisch algoritme(GA) om de optimale configuratie te vinden. Ter ondersteuning hiervan wordt ook een kosten calculator gebruikt.
 
+Onderstaande diagram geeft deels aan hoe de Train functie te werk gaat.
+![training sequence](https://github.com/Jerscovad/SimulatieTool/blob/master/images/design/Train_sequence.png)
+
+Omdat de Train functie niet zijn eigen klasse heeft, hoeft het niet geinitialiseerd te worden maar wordt het gewoon als functie aangeroepen:
+```python
+best = train(n_generations=100, group_size=100, surface_min=0, surface_max=10000000, 
+             angle_min=0, angle_max=90, orientation_min=-180, orientation_max=180, 
+             mutationPercentage=50, N_WIND_MIN=0, N_WIND_MAX=10, turbine_height=100,
+             cost_calculator=None, simulator=None, windturbineType=4, sp_efficiency=16)
+```
+Korte omschrijving van de parameters:
+- **n_generations:** Hoeveelheid generaties van het GA. Een generatie bevat meerdere groepen.
+- **group_size:** Grootte van iedere generatie van het GA. Een groep bevat meedere configuraties.
+- **surface_min/surface_max:** Minimale/maximale oppervlakte die het GA mag gebruiken.
+- **angle_min/angle_min:** Minimale/maximale hoek ([Inc](https://github.com/Jerscovad/SimulatieTool#calc_solar-functie)]) die het GA mag gebruiken
+- **orientation_min/orientation_max:** Minimale/maximale ([Az](https://github.com/Jerscovad/SimulatieTool#calc_solar-functie)) orientatie die het GA mag gebruiken.
+- **mutationPercentage:** Percentage van verschil tussen iedere configuratie in een generatie.
+- **N_WIND_MIN/N_WIND_MAX:** Minimale/maximale aantal windturbines die het GA mag gebruiken.
+- **turbine_height:** Hoogte van de rotor as van de windturbine.
+- **cost_calculator:** Costcalculator object die de kosten berekend tijdens de training. Bevat de stukprijzen van alle componenten.
+- **simulator:** Simulator object die de energie berekend voor iedere configuratie.
+- **windturbineType:** Type van de windturbine die wordt gebruikt tijden de training.
+- **sp_efficiency:** Efficientie van de zonnepanelen.
 
 _____
 
