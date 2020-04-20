@@ -7,11 +7,11 @@ _____
 ## Inhoudsopgave
 1. [Vooraf](https://github.com/Jerscovad/SimulatieTool#vooraf)
 2. [De Simulatie functie](https://github.com/Jerscovad/SimulatieTool#de-simulatie-functie)
-  * [De attributen](https://github.com/Jerscovad/SimulatieTool#de-attributen)
-  * [De functies](https://github.com/Jerscovad/SimulatieTool#de-functies)
-  * [calc_solar functie](https://github.com/Jerscovad/SimulatieTool#calc_solar-functie)
-  * [calc_wind functie](https://github.com/Jerscovad/SimulatieTool#calc_wind-functie)
-  * [calc_toal functie](https://github.com/Jerscovad/SimulatieTool#calc_total-functie)
+   * [De attributen](https://github.com/Jerscovad/SimulatieTool#de-attributen)
+   * [De functies](https://github.com/Jerscovad/SimulatieTool#de-functies)
+   * [calc_solar functie](https://github.com/Jerscovad/SimulatieTool#calc_solar-functie)
+   * [calc_wind functie](https://github.com/Jerscovad/SimulatieTool#calc_wind-functie)
+   * [calc_toal functie](https://github.com/Jerscovad/SimulatieTool#calc_total-functie)
 3. [De Train functie](https://github.com/Jerscovad/SimulatieTool#de-train-functie)
 4. [De Grafische User Interface (GUI)](https://github.com/Jerscovad/SimulatieTool#de-grafische-user-interface-gui)
 5. 
