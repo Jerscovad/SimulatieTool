@@ -138,7 +138,7 @@ Korte omschrijving van de parameters:
 - **n_generations:** Hoeveelheid generaties van het GA. Een generatie bevat meerdere groepen.
 - **group_size:** Grootte van iedere generatie van het GA. Een groep bevat meedere configuraties.
 - **surface_min/surface_max:** Minimale/maximale oppervlakte die het GA mag gebruiken.
-- **angle_min/angle_min:** Minimale/maximale hoek ([Inc](https://github.com/Jerscovad/SimulatieTool#calc_solar-functie)]) die het GA mag gebruiken
+- **angle_min/angle_min:** Minimale/maximale hoek ([Inc](https://github.com/Jerscovad/SimulatieTool#calc_solar-functie)) die het GA mag gebruiken
 - **orientation_min/orientation_max:** Minimale/maximale ([Az](https://github.com/Jerscovad/SimulatieTool#calc_solar-functie)) orientatie die het GA mag gebruiken.
 - **mutationPercentage:** Percentage van verschil tussen iedere configuratie in een generatie.
 - **N_WIND_MIN/N_WIND_MAX:** Minimale/maximale aantal windturbines die het GA mag gebruiken.
