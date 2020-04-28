@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 from datetime import datetime
-from generators import Windturbine
+from windturbine import Windturbine
 from location import Location
 import time
 import os

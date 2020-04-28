@@ -1,6 +1,6 @@
 import wx
 import sys
-from generators import Windturbine
+from windturbine import Windturbine
 from simulator import Simulator
 from train import train
 from field_information import field_info
@@ -52,22 +52,14 @@ class TrainWorker(threading.Thread):
     def __init__(self, parent, params):
         threading.Thread.__init__(self, daemon=True)
         self.parent = parent
-        self.params = params
-        self.stopped = False
+
+        self.trainer = Trainer(self, **params)
 
     def run(self):
-
-        train(self, n_generations=self.params['generations'], group_size=self.params['poolsize'], 
-              surface_min=self.params['sp_area_min'], surface_max=self.params['sp_area_max'], 
-              angle_min=self.params['sp_angle_min'], angle_max=self.params['sp_angle_max'], 
-              orientation_min=self.params['sp_or_min'], orientation_max=self.params['sp_or_max'], 
-              mutationPercentage=self.params['m_rate'], 
-              N_WIND_MIN=self.params['nwt_min'], N_WIND_MAX=self.params['nwt_max'],
-              cost_calculator=self.params['costcalculator'], simulator=self.params['simulator'], 
-              windturbineType=4, sp_efficiency=self.params['sp_eff'], turbine_height=self.params['turbine_height'])
+        self.trainer.train()
 
     def stop(self):
-        self.stopped = True
+        self.trainer.stopped = True
 
     def gendone(self, data):
         evt = GenDoneEvent(myEVT_GENDONE, -1, data)
@@ -1088,7 +1080,6 @@ class InputDialog(wx.Dialog):
         self.sp_or_max_field = wx.TextCtrl(self, wx.ID_ANY, value=str(self.sp_or_max), name='sp_or_max')
 
         #Number of configs.
-        # //TODO: Add number of configs in GA later
         n_sp_configs_txt = wx.StaticText(self, wx.ID_ANY, 'Number of configs ')
         self.n_sp_configs_list = wx.Choice(self, wx.ID_ANY, choices=['4', '3', '2', '1'])
 
@@ -1717,27 +1708,24 @@ class TrainTab(wx.Panel):
         self.progress.SetRange(self.dialog.generations)
         self.axes.clear()
 
-        self.costcalculator = CostCalculator(self.dialog.sp_price, self.dialog.st_price, 
-                                             self.dialog.demand, self.dialog.shortage_price, 
-                                             self.dialog.wt_price, self.dialog.surplus_price, 
-                                             self.dialog.trainby)
-        self.simulator = Simulator(Location(self.dialog.location), self.dialog.year_choice.GetString(self.dialog.year_choice.GetSelection()), 
-                                            Windturbine(5), latitude=self.dialog.latitude, 
-                                            longitude=self.dialog.longitude, terrain_factor=self.dialog.terrain_factor)
-        
-        parameters = {'m_rate':self.dialog.m_rate, 'generations':self.dialog.generations,
-                      'poolsize':self.dialog.poolsize, 'nwt_min':self.dialog.wtn_min,
-                      'nwt_max':self.dialog.wtn_max, 'sp_area_min':self.dialog.sp_area_min, 
-                      'sp_area_max':self.dialog.sp_area_max, 'sp_angle_min':self.dialog.sp_ang_min,
-                      'sp_angle_max':self.dialog.sp_ang_max, 'sp_or_min':self.dialog.sp_or_min, 
-                      'sp_or_max':self.dialog.sp_or_max, 'turbine_height': self.dialog.turbine_height,
-                      'sp_eff':self.dialog.sp_eff,
-                      'costcalculator': self.costcalculator, 'simulator': self.simulator,
-                      'n_sp_configs':({0:4, 1:3, 2:2, 3:1}.get(self.dialog.n_sp_configs))}
+        parameters = {'generations':self.dialog.generations, 'group_size':self.dialog.poolsize, 
+                      'n_configs':({0:4, 1:3, 2:2, 3:1}.get(self.dialog.n_sp_configs)), 
+                      'surface_min':self.dialog.sp_area_min, 'surface_max':self.dialog.sp_area_max, 
+                      'angle_min':self.dialog.sp_ang_min, 'angle_max':self.dialog.sp_ang_max, 
+                      'orientation_min':self.dialog.sp_or_min, 'orientation_max':self.dialog.sp_or_max, 
+                      'mutation_percentage':self.dialog.m_rate, 'turbines_min':self.dialog.wtn_min, 
+                      'turbines_max':self.dialog.wtn_max, 'turbine_height':self.dialog.turbine_height, 
+                      'cost_calculator':CostCalculator(self.dialog.sp_price, self.dialog.st_price, 
+                                                       self.dialog.demand, self.dialog.shortage_price, 
+                                                       self.dialog.wt_price, self.dialog.surplus_price, 
+                                                       self.dialog.trainby), 
+                      'simulator':Simulator(Location(self.dialog.location), self.dialog.year_choice.GetString(self.dialog.year_choice.GetSelection()), 
+                                            Windturbine('5'), latitude=self.dialog.latitude, 
+                                            longitude=self.dialog.longitude, terrain_factor=self.dialog.terrain_factor), 
+                      'sp_eff':16}
 
         self.train_worker = TrainWorker(self, parameters)
         self.train_worker.start()
-        
         self.start_button.Disable()
 
     def on_stop_clicked(self, event):
