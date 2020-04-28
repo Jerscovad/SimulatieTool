@@ -31,17 +31,24 @@ _____
 _____
 
 ## Gebruiks Handleiding
+
+De handleiding van de simtool kun je [hier](https://github.com/Jerscovad/SimulatieTool/raw/master/documents/Handleiding%20simtool.pdf "Instruction manual download") downloaden. De handleiding is ook te zien op [deze](https://github.com/Jerscovad/SimulatieTool/blob/master/documents/Handleiding%20simtool.pdf "Instruction manual page") pagina.
 _____
 
 ## De Grafische User Interface (GUI)
 De GUI is gemaakt met behulp van de [wxPython](https://wxpython.org/), [matplotlib](https://matplotlib.org/) library. Dit heeft als voordeel dat de GUI op meerdere besturingssystemen ondersteuning heeft.
+
+De huidige versie heeft een eenvoudig globaal ontwerp zoals hieronder te zien is.
+![GUI layout](https://github.com/Jerscovad/SimulatieTool/blob/master/images/design/GUI_classes.png)
+
+Voor meer informatie over de GUI en hoe die werkt raadpleeg het kopje [Gebruiks Handleiding](https://github.com/Jerscovad/SimulatieTool#gebruiks-handleiding)
 
 _____
 
 ## De Simulatie functie
 
 De Simulatie functie is de basis waarop de tool is gebouwd. Het is ondergebracht in zijn eigen [klasse](https://github.com/Jerscovad/SimulatieTool/blob/master/src/simulator.py) met functies. In de onderstaande diagram is te zien hoe de klasse is opgebouwd.
-![Simulator class](https://github.com/Jerscovad/SimulatieTool/blob/master/images/design/Simulator_classe.png)
+![Simulator class](https://github.com/Jerscovad/SimulatieTool/blob/master/images/design/Simulator_class.png)
 
 Voor het simuleren met data afkomsten van Schiphol over het jaar 2016 wordt het Simulatie object als volgt geinitialiseerd:
 ```python
