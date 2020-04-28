@@ -533,7 +533,7 @@ class SimWorker(threading.Thread):
 
         data_file.close()
 
-class TabOne(wx.Panel):
+class SimTab(wx.Panel):
     def __init__(self, parent):
         wx.Panel.__init__(self, parent)
 
@@ -1438,7 +1438,7 @@ class InputDialog(wx.Dialog):
         file_info = 'Current inputs saved as default.'
         wx.MessageBox(file_info, 'Defaults saved', wx.OK)
 
-class TabTwo(wx.Panel):
+class TrainTab(wx.Panel):
     def __init__(self, parent):
         """
             Tab for training the genetic algorithm. 
@@ -1898,8 +1898,8 @@ class MainFrame(wx.Frame):
 
         nb = wx.Notebook(self)
 
-        tab1 = TabOne(nb)
-        tab2 = TabTwo(nb)
+        tab1 = SimTab(nb)
+        tab2 = TrainTab(nb)
 
         nb.AddPage(tab1, "Simulation")
         nb.AddPage(tab2, "Training")
