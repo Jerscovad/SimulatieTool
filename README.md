@@ -6,22 +6,35 @@ _____
 
 ## Inhoudsopgave
 1. [Vooraf](https://github.com/Jerscovad/SimulatieTool#vooraf)
-2. [De Simulatie functie](https://github.com/Jerscovad/SimulatieTool#de-simulatie-functie)
+2. [Installatie](https://github.com/Jerscovad/SimulatieTool#installatie)
+3. [Gebruiks Handleiding](https://github.com.Jerscovad/SimulatieTool#gebruiks-handleiding)
+4. [De Grafische User Interface (GUI)](https://github.com/Jerscovad/SimulatieTool#de-grafische-user-interface-gui)
+5. [De Simulatie functie](https://github.com/Jerscovad/SimulatieTool#de-simulatie-functie)
    * [De attributen](https://github.com/Jerscovad/SimulatieTool#de-attributen)
    * [De functies](https://github.com/Jerscovad/SimulatieTool#de-functies)
    * [calc_solar functie](https://github.com/Jerscovad/SimulatieTool#calc_solar-functie)
    * [calc_wind functie](https://github.com/Jerscovad/SimulatieTool#calc_wind-functie)
    * [calc_toal functie](https://github.com/Jerscovad/SimulatieTool#calc_total-functie)
-3. [De Train functie](https://github.com/Jerscovad/SimulatieTool#de-train-functie)
-4. [De Grafische User Interface (GUI)](https://github.com/Jerscovad/SimulatieTool#de-grafische-user-interface-gui)
-5. [Installatie Handleiding](https://github.com/Jerscovad/SimulatieTool#installatie-handleiding)
-6. [Gebruiks Handleiding](https://github.com.Jerscovad/SimulatieTool#gebruiks-handleiding)
+6. [De Train functie](https://github.com/Jerscovad/SimulatieTool#de-train-functie)
+ 
+_____
 
 ## Vooraf
 Deze tool is volledig geschreven in [Python](https://www.python.org/) (support vanaf versie 3.6) en maakt onder andere gebruik van de [numpy](https://numpy.org/), [pandas](https://pandas.pydata.org/), [wxPython](https://wxpython.org/), [matplotlib](https://matplotlib.org/) libraries. Andere libraries die worden gebruikt zullen indien nodig worden toegelicht. De calculaties/berekeningen die worden gedaan zijn gebaseerd op matlab en simulink [scripts en simulaties](https://github.com/Jerscovad/SimulatieTool/tree/master/Matlab).
 
 De simulatietool bestaat uit twee delen/functies. Een Simulatie functie en een Train functie elke met hun eigen tabje in het tooltje. De Train functie is een wat uitgebreidere functie die door middel van een genetisch algoritme (GA) de optimale uikomst probeert te bereiken.
-De gehele tool is in Python geschreven.
+Om het geheel overzichtelijk en makkelijk in gebruik te maken is het ondergebracht in een GUI oftwel Grafische User Interface.
+
+_____
+
+## Installatie 
+_____
+
+## Gebruiks Handleiding
+_____
+
+## De Grafische User Interface (GUI)
+De GUI is gemaakt met behulp van de [wxPython](https://wxpython.org/), [matplotlib](https://matplotlib.org/) library. Dit heeft als voordeel dat de GUI op meerdere besturingssystemen ondersteuning heeft.
 
 _____
 
@@ -149,16 +162,3 @@ Korte omschrijving van de parameters:
 - **sp_efficiency:** Efficientie van de zonnepanelen.
 
 _____
-
-## De Grafische User Interface (GUI)
-
-_____
-
-## Installatie Handleiding
-
-_____
-
-## Gebruiks Handleiding
-
-_____
-
