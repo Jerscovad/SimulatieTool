@@ -345,8 +345,8 @@ class SimTab(wx.Panel):
         self.canvas = FigureCanvas(self, -1, self.figure)
 
         graph_button_sizer = wx.BoxSizer(wx.HORIZONTAL)
-        graph_button_sizer.AddMany([(self.previousgraph_button, 0, wx.ALL|wx.ALIGN_LEFT, 2), (self.nextgraph_button, 0, wx.ALL|wx.ALIGN_LEFT, 2),
-                                    (self.simulate_button, 0, wx.ALL|wx.ALIGN_LEFT, 2), (0, 0, 1),(self.save_button, 0, wx.ALL|wx.ALIGN_RIGHT, 2)])
+        graph_button_sizer.AddMany([(self.previousgraph_button, 0, wx.ALL, 2), (self.nextgraph_button, 0, wx.ALL, 2),
+                                    (self.simulate_button, 0, wx.ALL, 2), (0, 0, 1),(self.save_button, 0, wx.ALL, 2)])
         canvas_sizer.Add(graph_button_sizer, 1, wx.ALL|wx.EXPAND, 2)
         canvas_sizer.Add(self.canvas, 1, wx.LEFT | wx.TOP | wx.GROW)
 
@@ -1232,7 +1232,7 @@ class TrainTab(wx.Panel):
 
         # The (0, 0, 1) is the spacer to make the save button align to the right
         graph_button_sizer.AddMany([(self.previousgraph_button, 0, wx.ALL, 2), (self.nextgraph_button, 0, wx.ALL, 2),
-                                    (0, 0, 1), (self.save_button, 0, wx.ALL|wx.ALIGN_RIGHT, 2)])
+                                    (0, 0, 1), (self.save_button, 0, wx.ALL, 2)])
         canvas_sizer.Add(graph_button_sizer, 0, wx.ALL|wx.EXPAND, 2)
         canvas_sizer.Add(self.canvas, 1, wx.LEFT | wx.TOP | wx.GROW)
 
