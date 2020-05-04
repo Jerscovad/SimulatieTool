@@ -9,7 +9,7 @@ import pandas as pd
 import os
 import xlsxwriter as xlw
 import threading
-from calculate_cost import CostCalculator
+from costcalculator import CostCalculator
 from location import Location
 import matplotlib
 matplotlib.use('WXAgg')
@@ -29,13 +29,6 @@ EVT_GENDONE = wx.PyEventBinder(myEVT_GENDONE, 1)
 
 MAX_PLOTS = 4 #increase or decrease depending on number of graphs
 
-class SaveDoneEvent(wx.PyCommandEvent):
-    def __init__(self, etype, eid, filename=None):
-        wx.PyCommandEvent.__init__(self, etype, eid)
-        self.filename = filename
-    def GetName(self):
-        return self.filename
-
 class GenDoneEvent(wx.PyCommandEvent):
     def __init__(self, etype, eid, data):
         wx.PyCommandEvent.__init__(self, etype, eid)
@@ -45,6 +38,13 @@ class TrainDoneEvent(wx.PyCommandEvent):
     def __init__(self, etype, eid, data):
         wx.PyCommandEvent.__init__(self, etype, eid)
         self.data = data
+
+class SaveDoneEvent(wx.PyCommandEvent):
+    def __init__(self, etype, eid, filename=None):
+        wx.PyCommandEvent.__init__(self, etype, eid)
+        self.filename = filename
+    def GetName(self):
+        return self.filename
 
 class TrainWorker(threading.Thread):
     def __init__(self, parent, params):
@@ -69,7 +69,7 @@ class TrainWorker(threading.Thread):
 
 class FileWriter(threading.Thread):
     def __init__(self, parent, path, location, year_choice, terrain_factor, latitude, 
-                 longitude, windfeatures, solarfeatures, sp_eff):
+                 longitude, windfeatures, solarfeatures, sp_eff, wt_type):
 
         threading.Thread.__init__(self, daemon=True)
         self.parent = parent
@@ -82,10 +82,11 @@ class FileWriter(threading.Thread):
         self.windfeatures = windfeatures
         self.solarfeatures = solarfeatures
         self.sp_eff = sp_eff
+        self.turbine_type = wt_type
 
     def run(self):
 
-        sim = Simulator(self.location, self.year_choice, Windturbine(), terrain_factor = self.terrain_factor )
+        sim = Simulator(self.location, self.year_choice, Windturbine(self.turbine_type), terrain_factor = self.terrain_factor )
         sim.latitude = self.latitude
         sim.longitude = self.longitude
         P_wt,E_wt = sim.calc_wind(self.windfeatures)
@@ -148,6 +149,7 @@ class FileWriter(threading.Thread):
         parametersheet.write('C22', self.sp_eff)
         
         data_file.close()
+
 
 class SimTab(wx.Panel):
     def __init__(self, parent):
@@ -570,7 +572,8 @@ class SimTab(wx.Panel):
 
         params = {'location':self.location_obj, 'year_choice':self.year_choice.GetString(self.year_choice.GetCurrentSelection()),
                   'terrain_factor':self.terrain_factor, 'latitude':self.latitude,'longitude':self.longitude,
-                  'windfeatures':windfeatures,'solarfeatures':solarfeatures,'sp_eff':self.sp_eff}
+                  'windfeatures':windfeatures,'solarfeatures':solarfeatures,'sp_eff':self.sp_eff,
+                  'wt_type':self.wt_type_choice.GetString(self.wt_type_choice.GetCurrentSelection())}
 
         with wx.FileDialog(self, "Save simulation", defaultFile='Simulation_output', wildcard='Excel files(*.xlsx)|*.*',
                            style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT) as fileDialog:

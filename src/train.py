@@ -2,7 +2,7 @@
 import numpy as np
 import wx
 import pandas as pd
-from calculate_cost import CostCalculator
+from costcalculator import CostCalculator
 from genetic_algorithm import GeneticAlgorithm
 from multiprocessing import Process, Value
 from windturbine import Windturbine
