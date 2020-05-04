@@ -67,64 +67,41 @@ class TrainWorker(threading.Thread):
         evt = TrainDoneEvent(myEVT_TRAINDONE, -1, info)
         wx.PostEvent(self.parent, evt)
 
-class SimWorker(threading.Thread):
-    def __init__(self, parent, params):
+class FileWriter(threading.Thread):
+    def __init__(self, parent, path, location, year_choice, terrain_factor, latitude, 
+                 longitude, windfeatures, solarfeatures, sp_eff):
 
         threading.Thread.__init__(self, daemon=True)
         self.parent = parent
-        self.location = params[0]
-        self.year_choice = params[1]
-        self.terrain_factor = params[2]
-        self.latitude = params[3]
-        self.longitude = params[4]
-        self.windfeatures = params[5]
-        self.solarfeatures = params[6]
-        self.store_wt_out = params[7][0]
-        self.store_sp_out = params[7][1]
-        self.store_total_out = params[7][2]
-        self.filename = params[8]
-        self.sp_eff = params[9]
-        self.output_type = params[11] # 0 for simulation, 1 for training
+        self.path = '{}.xlsx'.format(path)
+        self.location = location
+        self.year_choice = year_choice
+        self.terrain_factor = terrain_factor
+        self.latitude = latitude
+        self.longitude = longitude
+        self.windfeatures = windfeatures
+        self.solarfeatures = solarfeatures
+        self.sp_eff = sp_eff
 
     def run(self):
 
         sim = Simulator(self.location, self.year_choice, Windturbine(), terrain_factor = self.terrain_factor )
         sim.latitude = self.latitude
         sim.longitude = self.longitude
+        P_wt,E_wt = sim.calc_wind(self.windfeatures)
+        P_sp,E_sp = sim.calc_solar(Az=self.solarfeatures[2::3], Inc=self.solarfeatures[1::3], sp_area=self.solarfeatures[0::3], sp_eff=self.sp_eff)
+        P_tot,E_tot = sim.calc_total_power(self.solarfeatures, self.windfeatures, self.sp_eff)
 
-        if self.store_wt_out:
-            P_wt,_ = sim.calc_wind(self.windfeatures)
-        else:
-            P_wt = 0
-        if self.store_sp_out:
-            P_sp,_ = sim.calc_solar(Az=self.solarfeatures[2::3], Inc=self.solarfeatures[1::3], sp_area=self.solarfeatures[0::3], sp_eff=self.sp_eff)
-        else:
-            P_sp = 0
-        if self.store_total_out:
-            P_tot,_ = sim.calc_total_power(self.solarfeatures, self.windfeatures, self.sp_eff)
-        else:
-            P_tot = 0
+        data = {'P_wt':P_wt,'E_wt':E_wt, 'P_sp':P_sp, 'E_sp':E_sp, 'P_tot':P_tot, 'E_tot':E_tot}
 
-        data = {'Pwt':P_wt,'Psp': P_sp,'Ptot': P_tot}
+        self.write_data(data)
 
-        self.write_data(data, self.filename)
-
-        evt = SaveDoneEvent(myEVT_SAVEDONE, -1, filename=self.filename)
+        evt = SaveDoneEvent(myEVT_SAVEDONE, -1, filename=self.path)
         wx.PostEvent(self.parent, evt)
 
-    def write_data(self, data, filename):
+    def write_data(self, data):
         
-        file_path = filename + ".xlsx"
-        if self.output_type == 0:
-            if not os.path.isdir('./Simulation output'):
-                os.mkdir('./Simulation output') 
-            file_path = 'Simulation output{sep}{file}.xlsx'.format(sep=os.sep,file=filename)
-        elif self.output_type == 1:
-            if not os.path.isdir('./Training output'):
-                os.mkdir('./Training output') 
-            file_path = 'Training output{sep}{file}.xlsx'.format(sep=os.sep,file=filename)
-
-        data_file = xlw.Workbook(file_path)
+        data_file = xlw.Workbook(self.path)
         bold = data_file.add_format({'bold': True})
 
         parametersheet = data_file.add_worksheet('Input parameters')
@@ -170,357 +147,6 @@ class SimWorker(threading.Thread):
         parametersheet.write('B22', 'Sp Efficiency', bold)
         parametersheet.write('C22', self.sp_eff)
         
-        datasheet = data_file.add_worksheet('Output data')
-        
-        demand = np.full(365, 6000)
-        data_sized = {'Pwt': 0, 'Psp': 0, 'Ptot': 0}
-
-        datasheet.write('A1', 'Hourly', bold)        
-        datasheet.write('E1', 'Daily', bold)
-        datasheet.write('A2', 'Pwt', bold)
-        datasheet.write('B2', 'Psp', bold)
-        datasheet.write('C2', 'Ptot', bold)
-        datasheet.write('E2', 'Pwt', bold)
-        datasheet.write('F2', 'Psp', bold)
-        datasheet.write('G2', 'Ptot', bold)
-        datasheet.write('H2', 'Demand', bold)
-        datasheet.write_column('H3', demand)
-
-        if self.store_wt_out:
-            datasheet.write_column('A3', data['Pwt'])
-            data_sized['Pwt'] = np.mean(np.reshape(data['Pwt'], (365,24)), axis=1)
-            datasheet.write_column('E3', data_sized['Pwt'])
-        
-        if self.store_sp_out:
-            datasheet.write_column('B3', data['Psp'])
-            data_sized['Psp'] = np.mean(np.reshape(data['Psp'], (365,24)), axis=1)
-            datasheet.write_column('F3', data_sized['Psp'])
-        
-        if self.store_total_out:
-            datasheet.write_column('C3', data['Ptot'])
-            data_sized['Ptot'] = np.mean(np.reshape(data['Ptot'], (365,24)), axis=1)
-            datasheet.write_column('G3', data_sized['Ptot'])
-
-        graphsheet = data_file.add_worksheet('Graphs')
-
-        chart = data_file.add_chart({'type': 'line'})
-        chart.set_title({'name':'Daily avg. output'})
-        chart.set_x_axis({'display units':'days'})
-        chart.set_y_axis({'display units':'Output'})
-
-        if self.store_wt_out:
-            chart.add_series({
-            'values':     '=Output data!$E$3:$E$367',
-            'line':       {'color': 'blue'},
-            'name': 'Wind'
-            })
-
-        if self.store_sp_out:
-            chart.add_series({
-            'values':     '=Output data!$F$3:$F$367',
-            'line':       {'color': 'yellow'},
-            'name': 'Solar'
-            })
-
-        if self.store_total_out:     
-            chart.add_series({
-            'values':     '=Output data!$G$3:$G$367',
-            'line':       {'color': 'green'},
-            'name': 'Total'
-            })
-
-        chart.add_series({
-        'values':     '=Output data!$H$3:$H$367',
-        'line':       {'color': 'red'},
-        'name': 'Demand'
-        })
-
-        graphsheet.insert_chart( 'B2', chart, { 'x_scale': 3, 'y_scale': 2,})
-
-        graph1 = data_file.add_chart({'type': 'line'})
-        graph1.set_title({'name': 'Hourly output graph 1 of 12'})
-        graph1.set_x_axis({ 'display units':'hours',
-                            'name_font': {'size': 14, 'bold': True}})
-        graph1.set_y_axis({'display units': 'Output',
-                            'name_font': {'size': 14, 'bold': True}})
-        
-        graph2 = data_file.add_chart({'type': 'line'})
-        graph2.set_title({'name': 'Hourly output graph 2 of 12'})
-        graph2.set_x_axis({ 'display units':'hours',
-                            'name_font': {'size': 14, 'bold': True}})
-        graph2.set_y_axis({'display units': 'Output',
-                            'name_font': {'size': 14, 'bold': True}})
-        
-        graph3 = data_file.add_chart({'type': 'line'})
-        graph3.set_title({'name': 'Hourly output graph 3 of 12'})
-        graph3.set_x_axis({ 'display units':'hours',
-                            'name_font': {'size': 14, 'bold': True}})
-        graph3.set_y_axis({'display units': 'Output',
-                            'name_font': {'size': 14, 'bold': True}})
-        
-        graph4 = data_file.add_chart({'type': 'line'})
-        graph4.set_title({'name': 'Hourly output graph 4 of 12'})
-        graph4.set_x_axis({ 'display units':'hours',
-                            'name_font': {'size': 14, 'bold': True}})
-        graph4.set_y_axis({'display units': 'Output',
-                            'name_font': {'size': 14, 'bold': True}})
-        
-        graph5 = data_file.add_chart({'type': 'line'})
-        graph5.set_title({'name': 'Hourly output graph 5 of 12'})
-        graph5.set_x_axis({ 'display units':'hours',
-                            'name_font': {'size': 14, 'bold': True}})
-        graph5.set_y_axis({'display units': 'Output',
-                            'name_font': {'size': 14, 'bold': True}})
-        
-        graph6 = data_file.add_chart({'type': 'line'})
-        graph6.set_title({'name': 'Hourly output graph 6 of 12'})
-        graph6.set_x_axis({ 'display units':'hours',
-                            'name_font': {'size': 14, 'bold': True}})
-        graph6.set_y_axis({'display units': 'Output',
-                            'name_font': {'size': 14, 'bold': True}})
-        
-        graph7 = data_file.add_chart({'type': 'line'})
-        graph7.set_title({'name': 'Hourly output graph 7 of 12'})
-        graph7.set_x_axis({ 'display units':'hours',
-                            'name_font': {'size': 14, 'bold': True}})
-        graph7.set_y_axis({'display units': 'Output',
-                            'name_font': {'size': 14, 'bold': True}})
-        
-        graph8 = data_file.add_chart({'type': 'line'})
-        graph8.set_title({'name': 'Hourly output graph 8 of 12'})
-        graph8.set_x_axis({ 'display units':'hours',
-                            'name_font': {'size': 14, 'bold': True}})
-        graph8.set_y_axis({'display units': 'Output',
-                            'name_font': {'size': 14, 'bold': True}})
-        
-        graph9 = data_file.add_chart({'type': 'line'})
-        graph9.set_title({'name': 'Hourly output graph 9 of 12'})
-        graph9.set_x_axis({ 'display units':'hours',
-                            'name_font': {'size': 14, 'bold': True}})
-        graph9.set_y_axis({'display units': 'Output',
-                            'name_font': {'size': 14, 'bold': True}})
-        
-        graph10 = data_file.add_chart({'type': 'line'})
-        graph10.set_title({'name': 'Hourly output graph 10 of 12'})
-        graph10.set_x_axis({'display units':'hours',
-                            'name_font': {'size': 14, 'bold': True}})
-        graph10.set_y_axis({'display units': 'Output',
-                            'name_font': {'size': 14, 'bold': True}})
-        
-        graph11 = data_file.add_chart({'type': 'line'})
-        graph11.set_title({'name': 'Hourly output graph 11 of 12'})
-        graph11.set_x_axis({'display units':'hours',
-                            'name_font': {'size': 14, 'bold': True}})
-        graph11.set_y_axis({'display units': 'Output',
-                            'name_font': {'size': 14, 'bold': True}})
-
-        graph12 = data_file.add_chart({'type': 'line'})
-        graph12.set_title({'name': 'Hourly output graph 12 of 12'})
-        graph12.set_x_axis({'display units':'hours',
-                            'name_font': {'size': 14, 'bold': True}})
-        graph12.set_y_axis({'display units': 'Output',
-                            'name_font': {'size': 14, 'bold': True}})
-
-
-        if self.store_wt_out:
-            graph1.add_series({
-            'values': '=Output data!$A$3:$A$733',
-            'line': { 'color': 'blue'},
-            'name': 'Wind'
-                })
-            graph2.add_series({
-            'values': '=Output data!$A$733:$A$1463',
-            'line': { 'color': 'blue'},
-            'name': 'Wind'
-                })
-            graph3.add_series({
-            'values': '=Output data!$A$1463:$A$2193',
-            'line': { 'color': 'blue'},
-            'name': 'Wind'
-                })
-            graph4.add_series({
-            'values': '=Output data!$A$2193:$A$2923',
-            'line': { 'color': 'blue'},
-            'name': 'Wind'
-                })
-            graph5.add_series({
-            'values': '=Output data!$A$2923:$A$3653',
-            'line': { 'color': 'blue'},
-            'name': 'Wind'
-                })
-            graph6.add_series({
-            'values': '=Output data!$A$3653:$A$4383',
-            'line': { 'color': 'blue'},
-            'name': 'Wind'
-                })
-            graph7.add_series({
-            'values': '=Output data!$A$4383:$A$5113',
-            'line': { 'color': 'blue'},
-            'name': 'Wind'
-                })
-            graph8.add_series({
-            'values': '=Output data!$A$5113:$A$5843',
-            'line': { 'color': 'blue'},
-            'name': 'Wind'
-                })
-            graph9.add_series({
-            'values': '=Output data!$A$5843:$A$6573',
-            'line': { 'color': 'blue'},
-            'name': 'Wind'
-                })
-            graph10.add_series({
-            'values': '=Output data!$A$6573:$A$7303',
-            'line': { 'color': 'blue'},
-            'name': 'Wind'
-                })
-            graph11.add_series({
-            'values': '=Output data!$A$7303:$A$8033',
-            'line': { 'color': 'blue'},
-            'name': 'Wind'
-                })
-            graph12.add_series({
-            'values': '=Output data!$A$8033:$A$8763',
-            'line': { 'color': 'blue'},
-            'name': 'Wind'
-                })
-        if self.store_sp_out:
-            graph1.add_series({
-            'values': '=Output data!$B$3:$B$733',
-            'line': {'color' : 'yellow'},
-            'name': 'Solar'
-                })
-            graph2.add_series({
-            'values': '=Output data!$B$733:$B$1463',
-            'line': {'color' : 'yellow'},
-            'name': 'Solar'
-                })
-            graph3.add_series({
-            'values': '=Output data!$B$1463:$B$2193',
-            'line': {'color' : 'yellow'},
-            'name': 'Solar'
-                })
-            graph4.add_series({
-            'values': '=Output data!$B$2193:$B$2923',
-            'line': {'color' : 'yellow'},
-            'name': 'Solar'
-                })
-            graph5.add_series({
-            'values': '=Output data!$B$2923:$B$3653',
-            'line': {'color' : 'yellow'},
-            'name': 'Solar'
-                })
-            graph6.add_series({
-            'values': '=Output data!$B$3653:$B$4383',
-            'line': {'color' : 'yellow'},
-            'name': 'Solar'
-                })
-            graph7.add_series({
-            'values': '=Output data!$B$4383:$B$5113',
-            'line': {'color' : 'yellow'},
-            'name': 'Solar'
-                })
-            graph8.add_series({
-            'values': '=Output data!$B$5113:$B$5843',
-            'line': {'color' : 'yellow'},
-            'name': 'Solar'
-                })
-            graph9.add_series({
-            'values': '=Output data!$B$5843:$B$6573',
-            'line': {'color' : 'yellow'},
-            'name': 'Solar'
-                })
-            graph10.add_series({
-            'values': '=Output data!$B$6573:$B$7303',
-            'line': {'color' : 'yellow'},
-            'name': 'Solar'
-                })
-            graph11.add_series({
-            'values': '=Output data!$B$7303:$B$8033',
-            'line': {'color' : 'yellow'},
-            'name': 'Solar'
-                })
-            graph12.add_series({
-            'values': '=Output data!$B$8033:$B$8763',
-            'line': {'color' : 'yellow'},
-            'name': 'Solar'
-                })
-        if self.store_total_out:
-            graph1.add_series({
-            'values': '=Output data!$C$3:$C$733',
-            'line': { 'color': 'green'},
-            'name': 'Total'
-                })
-            graph2.add_series({
-            'values': '=Output data!$C$733:$C$1463',
-            'line': { 'color': 'green'},
-            'name': 'Total'
-                })
-            graph3.add_series({
-            'values': '=Output data!$C$1463:$C$2193',
-            'line': { 'color': 'green'},
-            'name': 'Total'
-                })
-            graph4.add_series({
-            'values': '=Output data!$C$2193:$C$2923',
-            'line': { 'color': 'green'},
-            'name': 'Total'
-                })
-            graph5.add_series({
-            'values': '=Output data!$C$2923:$C$3653',
-            'line': { 'color': 'green'},
-            'name': 'Total'
-                })
-            graph6.add_series({
-            'values': '=Output data!$C$3653:$C$4383',
-            'line': { 'color': 'green'},
-            'name': 'Total'
-                })
-            graph7.add_series({
-            'values': '=Output data!$C$4383:$C$5113',
-            'line': { 'color': 'green'},
-            'name': 'Total'
-                })
-            graph8.add_series({
-            'values': '=Output data!$C$5113:$C$5843',
-            'line': { 'color': 'green'},
-            'name': 'Total'
-                })
-            graph9.add_series({
-            'values': '=Output data!$C$5843:$C$6573',
-            'line': { 'color': 'green'},
-            'name': 'Total'
-                })
-            graph10.add_series({
-            'values': '=Output data!$C$6573:$C$7303',
-            'line': { 'color': 'green'},
-            'name': 'Total'
-                })
-            graph11.add_series({
-            'values': '=Output data!$C$7303:$C$8033',
-            'line': { 'color': 'green'},
-            'name': 'Total'
-                })
-            graph12.add_series({
-            'values': '=Output data!$C$8033:$C$8763',
-            'line': { 'color': 'green'},
-            'name': 'Total'
-                })
-        
-
-        graphsheet.insert_chart( 'B34', graph1, { 'x_scale': 2, 'y_scale': 2,})
-        graphsheet.insert_chart( 'B68', graph2, { 'x_scale': 2, 'y_scale': 2,})
-        graphsheet.insert_chart( 'B102', graph3, { 'x_scale': 2, 'y_scale': 2,})
-        graphsheet.insert_chart( 'B136', graph4, { 'x_scale': 2, 'y_scale': 2,})
-        graphsheet.insert_chart( 'B170', graph5, { 'x_scale': 2, 'y_scale': 2,})
-        graphsheet.insert_chart( 'B204', graph6, { 'x_scale': 2, 'y_scale': 2,})
-        graphsheet.insert_chart( 'B238', graph7, { 'x_scale': 2, 'y_scale': 2,})
-        graphsheet.insert_chart( 'B272', graph8, { 'x_scale': 2, 'y_scale': 2,})
-        graphsheet.insert_chart( 'B306', graph9, { 'x_scale': 2, 'y_scale': 2,})
-        graphsheet.insert_chart( 'B340', graph10, { 'x_scale': 2, 'y_scale': 2,})
-        graphsheet.insert_chart( 'B374', graph11, { 'x_scale': 2, 'y_scale': 2,})
-        graphsheet.insert_chart( 'B408', graph12, { 'x_scale': 2, 'y_scale': 2,})
-
-
         data_file.close()
 
 class SimTab(wx.Panel):
@@ -663,7 +289,7 @@ class SimTab(wx.Panel):
         ter_txt = wx.StaticText(self, wx.ID_ANY, 'Terrain factor ')
         self.ter_field = wx.TextCtrl(self, wx.ID_ANY, value=str(self.terrain_factor))
         wt_type_txt = wx.StaticText(self, wx.ID_ANY, 'Type: ')
-        wt_path = 'config{}turbines'.format({os.sep})
+        wt_path = 'config{}turbines'.format(os.sep)
         self.wt_type_choice = wx.Choice(self, wx.ID_ANY, choices=[os.path.splitext(n)[0] for n in os.listdir(wt_path) if '.csv' in n])
 
         self.wt_out = wx.CheckBox(self, wx.ID_ANY, 'Turbinepower ')
@@ -940,19 +566,27 @@ class SimTab(wx.Panel):
                          float(self.sp_area_2), float(self.sp_ang_2), float(self.sp_or_2),
                          float(self.sp_area_3), float(self.sp_ang_3), float(self.sp_or_3),
                          float(self.sp_area_4), float(self.sp_ang_4), float(self.sp_or_4)]
-        store_params = [self.store_wt_out, self.store_sp_out, self.store_total_out]
         price_params = [self.sp_price, self.wt_price, self.st_price]
-        parameters = [self.location_obj, self.year_choice.GetString(self.year_choice.GetCurrentSelection()), self.terrain_factor, 
-                      self.latitude, self.longitude, windfeatures, solarfeatures, store_params, 
-                      self.filename_field.GetValue(), self.sp_eff, price_params, 0]
-        worker = SimWorker(self, parameters)
-        worker.start()
-        self.save_button.Disable()
+
+        params = {'location':self.location_obj, 'year_choice':self.year_choice.GetString(self.year_choice.GetCurrentSelection()),
+                  'terrain_factor':self.terrain_factor, 'latitude':self.latitude,'longitude':self.longitude,
+                  'windfeatures':windfeatures,'solarfeatures':solarfeatures,'sp_eff':self.sp_eff}
+
+        with wx.FileDialog(self, "Save simulation", defaultFile='Simulation_output', wildcard='Excel files(*.xlsx)|*.*',
+                           style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT) as fileDialog:
+
+            if fileDialog.ShowModal() == wx.ID_CANCEL:
+                return
+
+            path = fileDialog.GetPath()
+            self.save_button.Disable()
+            writer = FileWriter(self, path, **params)
+            writer.start()
 
     def on_savedone(self, evt):
         filename = evt.GetName()
 
-        file_info = 'Simulation stored in ' + filename + '.xlsx'
+        file_info = 'Simulation stored in {}'.format(filename)
         wx.MessageBox(file_info, 'Saving done', wx.OK)
         self.save_button.Enable()
 
@@ -1092,7 +726,7 @@ class InputDialog(wx.Dialog):
         ter_txt = wx.StaticText(self, wx.ID_ANY, 'Terrain factor ')
         self.ter_field = wx.TextCtrl(self, wx.ID_ANY, value=str(self.terrain_factor), name='terrain_factor')
         wt_type_txt = wx.StaticText(self, wx.ID_ANY, 'Type: ')
-        wt_path= 'config{}turbines'.format({os.sep})
+        wt_path= 'config{}turbines'.format(os.sep)
         self.wt_type_choice= wx.Choice(self, wx.ID_ANY, choices=[os.path.splitext(n)[0] for n in os.listdir(wt_path) if '.csv' in n])
 
         win_input_grid.AddMany([(wtn_min_txt, 0, wx.ALL, 2), (self.wtn_min_field, 0, wx.ALL, 2),
@@ -1849,25 +1483,35 @@ class TrainTab(wx.Panel):
         self.canvas.draw()
 
     def on_save_clicked(self, event):
-        
+
         windfeatures = [int(self.n_wt), int(self.wt_height)]
         solarfeatures = [float(self.sp_area_1), float(self.sp_ang_1), float(self.sp_or_1), 
                          float(self.sp_area_2), float(self.sp_ang_2), float(self.sp_or_2),
                          float(self.sp_area_3), float(self.sp_ang_3), float(self.sp_or_3),
                          float(self.sp_area_4), float(self.sp_ang_4), float(self.sp_or_4)]
-        store_params = [self.store_wt_out, self.store_sp_out, self.store_total_out]
         price_params = [self.dialog.sp_price, self.dialog.wt_price, self.dialog.st_price]
-        parameters = [Location(self.dialog.location), self.dialog.year_choice.GetString(self.dialog.year_choice.GetCurrentSelection()), self.dialog.terrain_factor, 
-                      self.dialog.latitude, self.dialog.longitude, windfeatures, solarfeatures, store_params, 
-                      self.filename_field.GetValue(), self.dialog.sp_eff, price_params, 1]
-        worker = SimWorker(self, parameters)
-        worker.start()
-        self.save_button.Disable()
+
+        params = {'location':Location(self.dialog.location), 'year_choice':self.dialog.year_choice.GetString(self.dialog.year_choice.GetCurrentSelection()),
+                  'terrain_factor':self.dialog.terrain_factor, 'latitude':self.dialog.latitude,
+                  'longitude':self.dialog.longitude,
+                  'windfeatures':windfeatures,'solarfeatures':solarfeatures,'sp_eff':self.dialog.sp_eff}
+
+        with wx.FileDialog(self, "Save trianing", defaultFile='Training_output', wildcard='Excel files(*.xlsx)|*.*',
+                           style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT) as fileDialog:
+
+            if fileDialog.ShowModal() == wx.ID_CANCEL:
+                return
+
+            path = fileDialog.GetPath()
+            print(path)
+            self.save_button.Disable()
+            writer = FileWriter(self, path, **params)
+            writer.start()
 
     def on_savedone(self, evt):
         filename = evt.GetName()
 
-        file_info = 'Training output stored in ' + filename + '.xlsx'
+        file_info = 'Training output stored in {}'.format(filename)
         wx.MessageBox(file_info, 'Saving done', wx.OK)
         
         self.save_button.Enable()
