@@ -345,9 +345,9 @@ class SimTab(wx.Panel):
         self.canvas = FigureCanvas(self, -1, self.figure)
 
         graph_button_sizer = wx.BoxSizer(wx.HORIZONTAL)
-        graph_button_sizer.AddMany([(self.previousgraph_button, 0, wx.ALL, 2), (self.nextgraph_button, 0, wx.ALL, 2),
-                                    (self.simulate_button, 0, wx.ALL, 2), (0, 0, 1),(self.save_button, 0, wx.ALL, 2)])
-        canvas_sizer.Add(graph_button_sizer, 1, wx.ALL|wx.EXPAND, 2)
+        graph_button_sizer.AddMany([(self.previousgraph_button, 0, wx.ALL), (self.nextgraph_button, 0, wx.ALL),
+                                    (self.simulate_button, 0, wx.ALL), (0, 0, 1),(self.save_button, 0, wx.ALL)])
+        canvas_sizer.Add(graph_button_sizer, 1, wx.ALL|wx.EXPAND)
         canvas_sizer.Add(self.canvas, 1, wx.LEFT | wx.TOP | wx.GROW)
 
         self.Bind(EVT_SAVEDONE, self.on_savedone)
@@ -397,7 +397,7 @@ class SimTab(wx.Panel):
         head_sizer.Add(middle_head_sizer, 0, wx.ALL, 2)
 
         vbox.Add(head_sizer, 0, wx.ALL, 2)
-        vbox.Add(canvas_sizer, 0, wx.ALL|wx.GROW, 2)
+        vbox.Add(canvas_sizer, 0, wx.ALL|wx.GROW)
 
         self.on_location_picked(None)
         self.SetSizer(vbox)
