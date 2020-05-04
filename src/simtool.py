@@ -2,7 +2,7 @@ import wx
 import sys
 from windturbine import Windturbine
 from simulator import Simulator
-from train import train
+from train import Trainer
 from field_information import field_info
 import numpy as np
 import pandas as pd
@@ -10,8 +10,6 @@ import os
 import xlsxwriter as xlw
 import threading
 from calculate_cost import CostCalculator
-from genetic_algorith import GeneticAlgorith
-from multiprocessing import Process, Value
 from location import Location
 import matplotlib
 matplotlib.use('WXAgg')
@@ -90,7 +88,7 @@ class SimWorker(threading.Thread):
 
     def run(self):
 
-        sim = Simulator(self.location, self.year_choice, Windturbine(5), terrain_factor = self.terrain_factor )
+        sim = Simulator(self.location, self.year_choice, Windturbine(), terrain_factor = self.terrain_factor )
         sim.latitude = self.latitude
         sim.longitude = self.longitude
 
@@ -664,6 +662,9 @@ class SimTab(wx.Panel):
         self.wth_field = wx.TextCtrl(self, wx.ID_ANY, value=str(self.wt_height))
         ter_txt = wx.StaticText(self, wx.ID_ANY, 'Terrain factor ')
         self.ter_field = wx.TextCtrl(self, wx.ID_ANY, value=str(self.terrain_factor))
+        wt_type_txt = wx.StaticText(self, wx.ID_ANY, 'Type: ')
+        wt_path = 'config' + os.sep + 'turbines'
+        self.wt_type_choice = wx.Choice(self, wx.ID_ANY, choices=[os.path.splitext(n)[0] for n in os.listdir(wt_path) if '.csv' in n])
 
         self.wt_out = wx.CheckBox(self, wx.ID_ANY, 'Turbinepower ')
         self.wt_out.SetValue(True)
@@ -720,39 +721,25 @@ class SimTab(wx.Panel):
 
         self.Bind(EVT_SAVEDONE, self.on_savedone)
 
-        hloc_sizer.Add(self.places, 0, wx.ALL, 2)
-        hloc_sizer.Add(self.year_choice, 0, wx.ALL, 2)
+        hloc_sizer.AddMany([(self.places, 0, wx.ALL, 2), (self.year_choice, 0, wx.ALL, 2)])
         
-        loc_grid.Add(lat_txt, 0, wx.ALL, 2)
-        loc_grid.Add(self.lat_field, 0, wx.ALL, 2)
-        loc_grid.Add(lon_txt, 0, wx.ALL, 2)
-        loc_grid.Add(self.lon_field, 0, wx.ALL, 2)
 
-        price_grid.Add(sp_price_txt, 0, wx.ALL, 2)
-        price_grid.Add(self.sp_price_field, 0, wx.ALL, 2)
-        price_grid.Add(wt_price_txt, 0, wx.ALL, 2)
-        price_grid.Add(self.wt_price_field, 0, wx.ALL, 2)
-        price_grid.Add(st_price_txt, 0, wx.ALL, 2)
-        price_grid.Add(self.st_price_field, 0, wx.ALL, 2)
+        loc_grid.AddMany([(lat_txt, 0, wx.ALL, 2), (self.lat_field, 0, wx.ALL, 2), 
+                         (lon_txt, 0, wx.ALL, 2), (self.lon_field, 0, wx.ALL, 2)])
 
+        price_grid.AddMany([(sp_price_txt, 0, wx.ALL, 2), (self.sp_price_field, 0, wx.ALL, 2),
+                            (wt_price_txt, 0, wx.ALL, 2), (self.wt_price_field, 0, wx.ALL, 2),
+                            (st_price_txt, 0, wx.ALL, 2), (self.st_price_field, 0, wx.ALL, 2)])
 
-        sol_grid.Add(area_txt, 0, wx.ALL, 2)
-        sol_grid.Add(self.area_field1, 0, wx.ALL, 2)
-        sol_grid.Add(self.area_field2, 0, wx.ALL, 2)
-        sol_grid.Add(self.area_field3, 0, wx.ALL, 2)
-        sol_grid.Add(self.area_field4, 0, wx.ALL, 2)
-        sol_grid.Add(angle_txt, 0, wx.ALL, 2)
-        sol_grid.Add(self.angle_field1, 0, wx.ALL, 2)
-        sol_grid.Add(self.angle_field2, 0, wx.ALL, 2)
-        sol_grid.Add(self.angle_field3, 0, wx.ALL, 2)
-        sol_grid.Add(self.angle_field4, 0, wx.ALL, 2)
-        sol_grid.Add(or_txt, 0, wx.ALL, 2)
-        sol_grid.Add(self.or_field1, 0, wx.ALL, 2)
-        sol_grid.Add(self.or_field2, 0, wx.ALL, 2)
-        sol_grid.Add(self.or_field3, 0, wx.ALL, 2)
-        sol_grid.Add(self.or_field4, 0, wx.ALL, 2)
-        sol_grid.Add(sp_eff_text, 0, wx.ALL, 2)
-        sol_grid.Add(self.sp_eff_field, 0, wx.ALL, 2)
+        sol_grid.AddMany([(area_txt, 0, wx.ALL, 2), (self.area_field1, 0, wx.ALL, 2),
+                          (self.area_field2, 0, wx.ALL, 2), (self.area_field3, 0, wx.ALL, 2),
+                          (self.area_field4, 0, wx.ALL, 2), (angle_txt, 0, wx.ALL, 2),
+                          (self.angle_field1, 0, wx.ALL, 2), (self.angle_field2, 0, wx.ALL, 2),
+                          (self.angle_field3, 0, wx.ALL, 2), (self.angle_field4, 0, wx.ALL, 2),
+                          (or_txt, 0, wx.ALL, 2), (self.or_field1, 0, wx.ALL, 2),
+                          (self.or_field2, 0, wx.ALL, 2), (self.or_field3, 0, wx.ALL, 2),
+                          (self.or_field4, 0, wx.ALL, 2), (sp_eff_text, 0, wx.ALL, 2),
+                          (self.sp_eff_field, 0, wx.ALL, 2)])
         
         hsol_sizer.Add(sol_grid, 0, wx.ALL, 2)
         
@@ -764,7 +751,8 @@ class SimTab(wx.Panel):
 
         win_grid.AddMany([(nwt_txt, 0, wx.ALL, 2), (self.nwt_field, 0, wx.ALL, 2),
                           (wth_txt, 0, wx.ALL, 2), (self.wth_field, 0, wx.ALL, 2),
-                          (ter_txt, 0, wx.ALL, 2), (self.ter_field, 0, wx.ALL, 2)])
+                          (ter_txt, 0, wx.ALL, 2), (self.ter_field, 0, wx.ALL, 2),
+                          (wt_type_txt, 0 , wx.ALL, 2), (self.wt_type_choice, 0, wx.ALL, 2)])
 
         hwin_sizer.Add(win_grid, 0, wx.ALL, 2)
 
@@ -793,8 +781,9 @@ class SimTab(wx.Panel):
         self.SetSizer(vbox)
 
     def on_simulate_clicked(self, event):
+        turbine = Windturbine(self.wt_type_choice.GetString(self.wt_type_choice.GetCurrentSelection()))
         simulator = Simulator(self.location_obj, self.year_choice.GetString(self.year_choice.GetCurrentSelection()), 
-                              Windturbine(5), latitude=self.latitude, longitude=self.longitude)
+                              turbine, latitude=self.latitude, longitude=self.longitude)
         self.solar_power, self.solar_energy = simulator.calc_solar(Az=[self.sp_or_1, self.sp_or_2, self.sp_or_3, self.sp_or_4], 
                                                                    Inc=[self.sp_ang_1, self.sp_ang_2, self.sp_ang_3, self.sp_ang_4], 
                                                                    sp_area=[self.sp_area_1, self.sp_area_2, self.sp_area_3, self.sp_area_4], sp_eff=self.sp_eff)
@@ -805,8 +794,9 @@ class SimTab(wx.Panel):
         self.demand_input = 6000
         self.demand = np.full(len(self.total_power), self.demand_input)
 
-        self.cost_calculator = CostCalculator(self.sp_price, self.st_price, self.demand_input, 0, self.wt_price, 0, True)
-        stats = self.cost_calculator.get_stats(self.total_power, np.sum([self.sp_area_1, self.sp_area_2, self.sp_area_3, self.sp_area_4]), 5, self.n_wt)
+        self.cost_calculator = CostCalculator(self.sp_price, self.st_price, self.demand_input, 0, self.wt_price, 0, True, windturbine=turbine)
+        stats = self.cost_calculator.get_stats(self.total_power, np.sum([self.sp_area_1, self.sp_area_2, self.sp_area_3, self.sp_area_4]), self.n_wt)
+
 
         self.power_surplus = stats['total_surplus']
         self.power_storage = stats['total_storage']
@@ -1041,7 +1031,7 @@ class InputDialog(wx.Dialog):
         #Flexgrids to group elements neatly
         loc_grid = wx.FlexGridSizer(2, 2, 10, 10)
         sol_input_grid = wx.FlexGridSizer(4, 4, 10, 10)
-        win_input_grid = wx.FlexGridSizer(4, 2, 10, 10)
+        win_input_grid = wx.FlexGridSizer(3, 4, 10, 10)
         self.price_grid = wx.FlexGridSizer(5, 2, 10, 10)
         power_grid = wx.FlexGridSizer(3, 2, 10,10)
         ga_grid = wx.FlexGridSizer(2, 4, 10, 10)
@@ -1101,11 +1091,15 @@ class InputDialog(wx.Dialog):
         self.turbine_height_field = wx.TextCtrl(self, wx.ID_ANY, value=str(self.turbine_height), name='turbine_height')
         ter_txt = wx.StaticText(self, wx.ID_ANY, 'Terrain factor ')
         self.ter_field = wx.TextCtrl(self, wx.ID_ANY, value=str(self.terrain_factor), name='terrain_factor')
+        wt_type_txt = wx.StaticText(self, wx.ID_ANY, 'Type: ')
+        wt_path= 'config' + os.sep + 'turbines'
+        self.wt_type_choice= wx.Choice(self, wx.ID_ANY, choices=[os.path.splitext(n)[0] for n in os.listdir(wt_path) if '.csv' in n])
 
         win_input_grid.AddMany([(wtn_min_txt, 0, wx.ALL, 2), (self.wtn_min_field, 0, wx.ALL, 2),
                                 (wtn_max_txt, 0, wx.ALL, 2), (self.wtn_max_field, 0, wx.ALL, 2),
                                 (turbine_height_txt, 0, wx.ALL, 2), (self.turbine_height_field, 0, wx.ALL, 2),
-                                (ter_txt, 0, wx.ALL, 2), (self.ter_field, 0, wx.ALL, 2)])
+                                (ter_txt, 0, wx.ALL, 2), (self.ter_field, 0, wx.ALL, 2),
+                                (wt_type_txt, 0, wx.ALL, 2), (self.wt_type_choice, 0, wx.ALL, 2)])
 
         #Genetic algorithm options
         demand_txt = wx.StaticText(self, wx.ID_ANY, 'Demand ')
@@ -1708,6 +1702,15 @@ class TrainTab(wx.Panel):
         self.progress.SetRange(self.dialog.generations)
         self.axes.clear()
 
+        turbine = Windturbine(self.dialog.wt_type_choice.GetString(self.dialog.wt_type_choice.GetSelection()))
+        self.simulator = Simulator(Location(self.dialog.location), self.dialog.year_choice.GetString(self.dialog.year_choice.GetSelection()), 
+                                            turbine, latitude=self.dialog.latitude, 
+                                            longitude=self.dialog.longitude, terrain_factor=self.dialog.terrain_factor)
+        self. costcalculator = CostCalculator(self.dialog.sp_price, self.dialog.st_price, 
+                                                       self.dialog.demand, self.dialog.shortage_price, 
+                                                       self.dialog.wt_price, self.dialog.surplus_price, 
+                                                       self.dialog.trainby,turbine)
+
         parameters = {'generations':self.dialog.generations, 'group_size':self.dialog.poolsize, 
                       'n_configs':({0:4, 1:3, 2:2, 3:1}.get(self.dialog.n_sp_configs)), 
                       'surface_min':self.dialog.sp_area_min, 'surface_max':self.dialog.sp_area_max, 
@@ -1715,13 +1718,8 @@ class TrainTab(wx.Panel):
                       'orientation_min':self.dialog.sp_or_min, 'orientation_max':self.dialog.sp_or_max, 
                       'mutation_percentage':self.dialog.m_rate, 'turbines_min':self.dialog.wtn_min, 
                       'turbines_max':self.dialog.wtn_max, 'turbine_height':self.dialog.turbine_height, 
-                      'cost_calculator':CostCalculator(self.dialog.sp_price, self.dialog.st_price, 
-                                                       self.dialog.demand, self.dialog.shortage_price, 
-                                                       self.dialog.wt_price, self.dialog.surplus_price, 
-                                                       self.dialog.trainby), 
-                      'simulator':Simulator(Location(self.dialog.location), self.dialog.year_choice.GetString(self.dialog.year_choice.GetSelection()), 
-                                            Windturbine('5'), latitude=self.dialog.latitude, 
-                                            longitude=self.dialog.longitude, terrain_factor=self.dialog.terrain_factor), 
+                      'cost_calculator':self.costcalculator, 
+                      'simulator':self.simulator, 
                       'sp_eff':16}
 
         self.train_worker = TrainWorker(self, parameters)
@@ -1769,7 +1767,7 @@ class TrainTab(wx.Panel):
 
         self.demand = np.full(len(self.total_energy), self.dialog.demand)
 
-        stats = self.costcalculator.get_stats(self.total_power, np.sum(surface_features), 5, turbines)
+        stats = self.costcalculator.get_stats(self.total_power, np.sum(surface_features), turbines)
 
         self.power_surplus = stats['total_surplus']
         self.power_storage = stats['total_storage']
