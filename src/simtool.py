@@ -263,6 +263,7 @@ class SimTab(wx.Panel):
         price_grid = wx.FlexGridSizer(3, 2, 10, 10)
 
         self.places = wx.Choice(self, wx.ID_ANY, choices=self.locations)
+        self.places.SetSelection(0)
         self.year_choice = wx.Choice(self, wx.ID_ANY, choices=self.years)
 
         self.lat_field = wx.TextCtrl(self, wx.ID_ANY, value=str(self.latitude))
