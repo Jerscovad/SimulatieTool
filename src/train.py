@@ -85,7 +85,7 @@ class Trainer():
                                                                 self.sp_eff)
                 # run cost calculator
                 sp_sm = np.sum(current_row[0:self.n_solar_features:3])
-                cost_array[i] = cost_calculator.calculate_cost(energy_production, sp_sm, n_turbines)
+                cost_array[i] = self.cost_calculator.calculate_cost(energy_production, sp_sm, n_turbines)
 
                 #quit when gui calls stop
                 if self.stopped:
@@ -99,14 +99,14 @@ class Trainer():
                 cost_temp = np.min(cost_array)
                 best_gen = best
 
-            if parent:
+            if self.parent:
                 event_data = [best_gen[0],generation]
-                parent.gendone(event_data)
+                self.parent.gendone(event_data)
 
             # quit when done
             if generation == last_generation:
-                if parent:
-                    parent.traindone(None)
+                if self.parent:
+                    self.parent.traindone(None)
                 return best_gen
             # run genetic algorithm
             group_values = self.genetic_algorithm.generate_new_population(group_values, cost_array)
