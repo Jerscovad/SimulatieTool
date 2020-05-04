@@ -118,11 +118,11 @@ class SimWorker(threading.Thread):
         if self.output_type == 0:
             if not os.path.isdir('./Simulation output'):
                 os.mkdir('./Simulation output') 
-            file_path = 'Simulation output' + os.sep + filename + '.xlsx'
+            file_path = 'Simulation output{sep}{file}.xlsx'.format(sep=os.sep,file=filename)
         elif self.output_type == 1:
             if not os.path.isdir('./Training output'):
                 os.mkdir('./Training output') 
-            file_path = 'Training output' + os.sep + filename + '.xlsx'
+            file_path = 'Training output{sep}{file}.xlsx'.format(sep=os.sep,file=filename)
 
         data_file = xlw.Workbook(file_path)
         bold = data_file.add_format({'bold': True})
@@ -663,7 +663,7 @@ class SimTab(wx.Panel):
         ter_txt = wx.StaticText(self, wx.ID_ANY, 'Terrain factor ')
         self.ter_field = wx.TextCtrl(self, wx.ID_ANY, value=str(self.terrain_factor))
         wt_type_txt = wx.StaticText(self, wx.ID_ANY, 'Type: ')
-        wt_path = 'config' + os.sep + 'turbines'
+        wt_path = 'config{}turbines'.format({os.sep})
         self.wt_type_choice = wx.Choice(self, wx.ID_ANY, choices=[os.path.splitext(n)[0] for n in os.listdir(wt_path) if '.csv' in n])
 
         self.wt_out = wx.CheckBox(self, wx.ID_ANY, 'Turbinepower ')
@@ -1092,7 +1092,7 @@ class InputDialog(wx.Dialog):
         ter_txt = wx.StaticText(self, wx.ID_ANY, 'Terrain factor ')
         self.ter_field = wx.TextCtrl(self, wx.ID_ANY, value=str(self.terrain_factor), name='terrain_factor')
         wt_type_txt = wx.StaticText(self, wx.ID_ANY, 'Type: ')
-        wt_path= 'config' + os.sep + 'turbines'
+        wt_path= 'config{}turbines'.format({os.sep})
         self.wt_type_choice= wx.Choice(self, wx.ID_ANY, choices=[os.path.splitext(n)[0] for n in os.listdir(wt_path) if '.csv' in n])
 
         win_input_grid.AddMany([(wtn_min_txt, 0, wx.ALL, 2), (self.wtn_min_field, 0, wx.ALL, 2),
@@ -1359,12 +1359,13 @@ class InputDialog(wx.Dialog):
         """ 
             Load defaults from file and update the fields. 
         """
-        defaults = pd.read_csv('config' + os.sep + 'defaults' + os.sep + 'train_defaults.csv', header=0)
+        defaults = pd.read_csv('config{sep}defaults{sep}train_defaults.csv'.format(sep=os.sep), header=0)
 
         self.places.SetSelection(defaults.location_choice.values[0])
         self.on_location_picked(None)
         self.year_choice.SetSelection(defaults.year_choice.values[0])
         self.n_sp_configs_list.SetSelection(defaults.n_sp_configs_choice.values[0])
+        self.wt_type_choice.SetSelection(defaults.turbine_type.values[0])
 
         self.location = defaults.location.values[0]
         self.year = defaults.year.values[0]
@@ -1411,6 +1412,7 @@ class InputDialog(wx.Dialog):
                     'sp_ang_max': self.sp_ang_max, 'sp_or_min': self.sp_or_min, 
                     'sp_or_max': self.sp_or_max, 'n_sp_configs': self.n_sp_configs,
                     'turbine_height': self.turbine_height, 'terrain_factor':self.terrain_factor,
+                    'turbine_type': self.wt_type_choice.GetCurrentSelection(),
                     'wtn_min': self.wtn_min, 'wtn_max': self.wtn_max,
                     'demand': self.demand, 'generations': self.generations, 
                     'poolsize': self.poolsize, 'm_rate': self.m_rate, 
@@ -1418,7 +1420,7 @@ class InputDialog(wx.Dialog):
                     'st_price': self.st_price, 'shortage_price': self.shortage_price, 'surplus_price': self.surplus_price,
                     'n_config_':self.n_sp_configs,'year_choice':self.year_choice.GetCurrentSelection(),
                     'location_choice':self.places.GetCurrentSelection(),'n_sp_configs_choice':self.n_sp_configs_list.GetCurrentSelection()}
-        pd.DataFrame([defaults]).to_csv('config' + os.sep + 'defaults' + os.sep + 'train_defaults.csv')
+        pd.DataFrame([defaults]).to_csv('config{sep}defaults{sep}train_defaults.csv'.format(sep=os.sep))
 
         file_info = 'Current inputs saved as default.'
         wx.MessageBox(file_info, 'Defaults saved', wx.OK)
