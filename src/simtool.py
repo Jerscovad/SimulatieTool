@@ -84,7 +84,8 @@ class FileWriter(threading.Thread):
     Class for writing simulation/training data into a xlsx file.
     """
     def __init__(self, parent, path, location, year_choice, terrain_factor, latitude, 
-                 longitude, windfeatures, solarfeatures, sp_eff, wt_type):
+                 longitude, windfeatures, solarfeatures, sp_eff, wt_type, sp_price, 
+                 st_price, wt_price, short_price, surp_price):
 
         threading.Thread.__init__(self, daemon=True)
         self.parent = parent
@@ -98,6 +99,11 @@ class FileWriter(threading.Thread):
         self.solarfeatures = solarfeatures
         self.sp_eff = sp_eff
         self.turbine_type = wt_type
+        self.sp_price = sp_price
+        self.wt_price = wt_price
+        self.st_price = st_price
+        self.short_price = short_price
+        self.surp_price = surp_price
 
     def run(self):
 
@@ -118,6 +124,7 @@ class FileWriter(threading.Thread):
         
         data_file = xlw.Workbook(self.path)
         bold = data_file.add_format({'bold': True})
+        money = data_file.add_format({'num_format': '€#,##0'})
 
         parametersheet = data_file.add_worksheet('Input parameters')
 
@@ -161,6 +168,32 @@ class FileWriter(threading.Thread):
         parametersheet.write('C21', self.solarfeatures[11])
         parametersheet.write('B22', 'Sp Efficiency', bold)
         parametersheet.write('C22', self.sp_eff)
+        parametersheet.write('B24', 'Solar price', bold)
+        parametersheet.write('C24', self.sp_price, money)
+        parametersheet.write('B25', 'Turbine price', bold)
+        parametersheet.write('C25', self.wt_price, money)
+        parametersheet.write('B26', 'Storage price', bold)
+        parametersheet.write('C26', self.st_price, money)
+        parametersheet.write('B27', 'Surplus price')
+        parametersheet.write('C27', self.surp_price, money)
+        parametersheet.write('B28', 'Shortage price')
+        parametersheet.write('C28', self.short_price, money)
+
+        datasheet = data_file.add_worksheet('Output')
+
+        datasheet.write('B1', 'Hourly output', bold)
+        datasheet.write('B2', 'Solar Power', bold)
+        datasheet.write_column('B3', data['P_sp'])
+        datasheet.write('C2', 'Solar Energy', bold)
+        datasheet.write_column('C3', data['E_sp'])
+        datasheet.write('D2', 'Wind power', bold)
+        datasheet.write_column('D3', data['P_wt'])
+        datasheet.write('E2', 'Wind Energy', bold)
+        datasheet.write_column('E3' , data['E_wt'])
+        datasheet.write('F2', 'Total Power', bold)
+        datasheet.write_column('F3', data['P_tot'])
+        datasheet.write('G2', 'Total Energy', bold)
+        datasheet.write_column('G3', data['E_tot'])
         
         data_file.close()
 
@@ -266,47 +299,47 @@ class SimTab(wx.Panel):
         self.places.SetSelection(0)
         self.year_choice = wx.Choice(self, wx.ID_ANY, choices=self.years)
 
-        self.lat_field = wx.TextCtrl(self, wx.ID_ANY, value=str(self.latitude))
-        self.lon_field = wx.TextCtrl(self, wx.ID_ANY, value=str(self.longitude))
+        self.lat_field = wx.TextCtrl(self, wx.ID_ANY, value=f'{self.latitude}')
+        self.lon_field = wx.TextCtrl(self, wx.ID_ANY, value=f'{self.longitude}')
 
         lat_txt = wx.StaticText(self, wx.ID_ANY, 'Latitude ')
         lon_txt = wx.StaticText(self, wx.ID_ANY, 'Longitude ')
 
         sp_price_txt = wx.StaticText(self, wx.ID_ANY, 'Solar panel (€/m²) ')
-        self.sp_price_field = wx.TextCtrl(self, wx.ID_ANY, value=str(self.sp_price))
+        self.sp_price_field = wx.TextCtrl(self, wx.ID_ANY, value=f'{self.sp_price}')
         wt_price_txt = wx.StaticText(self, wx.ID_ANY, 'Wind turbine (€/kWh) ')
-        self.wt_price_field = wx.TextCtrl(self, wx.ID_ANY, value=str(self.wt_price))
+        self.wt_price_field = wx.TextCtrl(self, wx.ID_ANY, value=f'{self.wt_price}')
         st_price_txt = wx.StaticText(self, wx.ID_ANY, 'Storage (€/kWh) ')
-        self.st_price_field = wx.TextCtrl(self, wx.ID_ANY, value=str(self.st_price))
+        self.st_price_field = wx.TextCtrl(self, wx.ID_ANY, value=f'{self.st_price}')
 
         sp_eff_text = wx.StaticText(self, wx.ID_ANY, 'Panel efficiency(%) ')
-        self.sp_eff_field = wx.TextCtrl(self, wx.ID_ANY, value = str(self.sp_eff))
+        self.sp_eff_field = wx.TextCtrl(self, wx.ID_ANY, value = f'{self.sp_eff}')
         area_txt = wx.StaticText(self, wx.ID_ANY, 'Surface ')
-        self.area_field1 = wx.TextCtrl(self, wx.ID_ANY, value=str(self.sp_area_1))
-        self.area_field2 = wx.TextCtrl(self, wx.ID_ANY, value=str(self.sp_area_2))
-        self.area_field3 = wx.TextCtrl(self, wx.ID_ANY, value=str(self.sp_area_3))
-        self.area_field4 = wx.TextCtrl(self, wx.ID_ANY, value=str(self.sp_area_4))
+        self.area_field1 = wx.TextCtrl(self, wx.ID_ANY, value=f'{self.sp_area_1}')
+        self.area_field2 = wx.TextCtrl(self, wx.ID_ANY, value=f'{self.sp_area_2}')
+        self.area_field3 = wx.TextCtrl(self, wx.ID_ANY, value=f'{self.sp_area_3}')
+        self.area_field4 = wx.TextCtrl(self, wx.ID_ANY, value=f'{self.sp_area_4}')
 
         angle_txt = wx.StaticText(self, wx.ID_ANY, 'Angle ')
-        self.angle_field1 = wx.TextCtrl(self, wx.ID_ANY, value=str(self.sp_ang_1))
-        self.angle_field2 = wx.TextCtrl(self, wx.ID_ANY, value=str(self.sp_ang_2))
-        self.angle_field3 = wx.TextCtrl(self, wx.ID_ANY, value=str(self.sp_ang_3))
-        self.angle_field4 = wx.TextCtrl(self, wx.ID_ANY, value=str(self.sp_ang_4))
+        self.angle_field1 = wx.TextCtrl(self, wx.ID_ANY, value=f'{self.sp_ang_1}')
+        self.angle_field2 = wx.TextCtrl(self, wx.ID_ANY, value=f'{self.sp_ang_2}')
+        self.angle_field3 = wx.TextCtrl(self, wx.ID_ANY, value=f'{self.sp_ang_3}')
+        self.angle_field4 = wx.TextCtrl(self, wx.ID_ANY, value=f'{self.sp_ang_4}')
 
         or_txt = wx.StaticText(self, wx.ID_ANY, 'Orientation ')
-        self.or_field1 = wx.TextCtrl(self, wx.ID_ANY, value=str(self.sp_or_1))
-        self.or_field2 = wx.TextCtrl(self, wx.ID_ANY, value=str(self.sp_or_2))
-        self.or_field3 = wx.TextCtrl(self, wx.ID_ANY, value=str(self.sp_or_3))
-        self.or_field4 = wx.TextCtrl(self, wx.ID_ANY, value=str(self.sp_or_4))
+        self.or_field1 = wx.TextCtrl(self, wx.ID_ANY, value=f'{self.sp_or_1}')
+        self.or_field2 = wx.TextCtrl(self, wx.ID_ANY, value=f'{self.sp_or_2}')
+        self.or_field3 = wx.TextCtrl(self, wx.ID_ANY, value=f'{self.sp_or_3}')
+        self.or_field4 = wx.TextCtrl(self, wx.ID_ANY, value=f'{self.sp_or_4}')
 
         nwt_txt = wx.StaticText(self, wx.ID_ANY, 'Number of turbines ')
-        self.nwt_field = wx.TextCtrl(self, wx.ID_ANY, value=str(self.n_wt))
+        self.nwt_field = wx.TextCtrl(self, wx.ID_ANY, value=f'{self.n_wt}')
         wth_txt = wx.StaticText(self, wx.ID_ANY, 'Turbine height ')
-        self.wth_field = wx.TextCtrl(self, wx.ID_ANY, value=str(self.wt_height))
+        self.wth_field = wx.TextCtrl(self, wx.ID_ANY, value=f'{self.wt_height}')
         ter_txt = wx.StaticText(self, wx.ID_ANY, 'Terrain factor ')
-        self.ter_field = wx.TextCtrl(self, wx.ID_ANY, value=str(self.terrain_factor))
+        self.ter_field = wx.TextCtrl(self, wx.ID_ANY, value=f'{self.terrain_factor}')
         wt_type_txt = wx.StaticText(self, wx.ID_ANY, 'Type: ')
-        wt_path = 'config{}turbines'.format(os.sep)
+        wt_path = f'config{os.sep}turbines'
         self.wt_type_choice = wx.Choice(self, wx.ID_ANY, choices=[os.path.splitext(n)[0] for n in os.listdir(wt_path) if '.csv' in n])
 
         self.save_button = wx.Button(self, wx.ID_ANY, label='Save simulation')
@@ -529,9 +562,9 @@ class SimTab(wx.Panel):
         self.year_choice.Clear()
         self.year_choice.AppendItems(self.years)
 
-        self.lat_field.SetValue(str('%.3f'%self.location_obj.latitude))
-        self.lon_field.SetValue(str('%.3f'%self.location_obj.longitude))
-        self.ter_field.SetValue(str('%.3f'%self.location_obj.terrain))
+        self.lat_field.SetValue(f'{self.location_obj.latitude:.3f}')
+        self.lon_field.SetValue(f'{self.location_obj.longitude:.3f}')
+        self.ter_field.SetValue(f'{self.location_obj.terrain:.3f}')
 
     # When a field is changed, update the variables connected.
     # Add single field update in later versions with event-id linked to variable?    
@@ -566,12 +599,12 @@ class SimTab(wx.Panel):
                          float(self.sp_area_2), float(self.sp_ang_2), float(self.sp_or_2),
                          float(self.sp_area_3), float(self.sp_ang_3), float(self.sp_or_3),
                          float(self.sp_area_4), float(self.sp_ang_4), float(self.sp_or_4)]
-        price_params = [self.sp_price, self.wt_price, self.st_price]
 
         params = {'location':self.location_obj, 'year_choice':self.year_choice.GetString(self.year_choice.GetCurrentSelection()),
                   'terrain_factor':self.terrain_factor, 'latitude':self.latitude,'longitude':self.longitude,
                   'windfeatures':windfeatures,'solarfeatures':solarfeatures,'sp_eff':self.sp_eff,
-                  'wt_type':self.wt_type_choice.GetString(self.wt_type_choice.GetCurrentSelection())}
+                  'wt_type':self.wt_type_choice.GetString(self.wt_type_choice.GetCurrentSelection()), 
+                  'sp_price': self.sp_price, 'wt_price': self.wt_price, 'st_price':self.st_price}
 
         with wx.FileDialog(self, "Save simulation", defaultFile='Simulation_output', wildcard='Excel files(*.xlsx)|*.*',
                            style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT) as fileDialog:
@@ -683,8 +716,8 @@ class InputDialog(wx.Dialog):
         self.year_choice = wx.Choice(self, wx.ID_ANY, choices=self.years)
 
         #Text input for latitude and longitude
-        self.lat_field = wx.TextCtrl(self, wx.ID_ANY, value=str(self.latitude))
-        self.lon_field = wx.TextCtrl(self, wx.ID_ANY, value=str(self.longitude))
+        self.lat_field = wx.TextCtrl(self, wx.ID_ANY, value=f'{self.latitude}')
+        self.lon_field = wx.TextCtrl(self, wx.ID_ANY, value=f'{self.longitude}')
 
         #Labels for lat and lon
         lat_txt = wx.StaticText(self, wx.ID_ANY, 'Latitude ')
@@ -697,19 +730,19 @@ class InputDialog(wx.Dialog):
 
         #Solar options
         sp_eff_txt = wx.StaticText(self, wx.ID_ANY, 'Panel efficiency ')
-        self.sp_eff_field = wx.TextCtrl(self, wx.ID_ANY, value=str(self.sp_eff), name='sp_eff')
+        self.sp_eff_field = wx.TextCtrl(self, wx.ID_ANY, value=f'{self.sp_eff}', name='sp_eff')
         sp_area_min_txt = wx.StaticText(self, wx.ID_ANY, 'Surface min ')
-        self.sp_area_min_field = wx.TextCtrl(self, wx.ID_ANY, value=str(self.sp_area_min), name='sp_area_min')
+        self.sp_area_min_field = wx.TextCtrl(self, wx.ID_ANY, value=f'{self.sp_area_min}', name='sp_area_min')
         sp_area_max_txt = wx.StaticText(self, wx.ID_ANY, 'Surface max ')
-        self.sp_area_max_field = wx.TextCtrl(self, wx.ID_ANY, value=str(self.sp_area_max), name='sp_area_max')
+        self.sp_area_max_field = wx.TextCtrl(self, wx.ID_ANY, value=f'{self.sp_area_max}', name='sp_area_max')
         sp_ang_min_txt = wx.StaticText(self, wx.ID_ANY, 'Angle min ')
-        self.sp_ang_min_field = wx.TextCtrl(self, wx.ID_ANY, value=str(self.sp_ang_min), name='sp_ang_min')
+        self.sp_ang_min_field = wx.TextCtrl(self, wx.ID_ANY, value=f'{self.sp_ang_min}', name='sp_ang_min')
         sp_ang_max_txt = wx.StaticText(self, wx.ID_ANY, 'Angle max ')
-        self.sp_ang_max_field = wx.TextCtrl(self, wx.ID_ANY, value=str(self.sp_ang_max), name='sp_ang_max')
+        self.sp_ang_max_field = wx.TextCtrl(self, wx.ID_ANY, value=f'{self.sp_ang_max}', name='sp_ang_max')
         sp_or_min_txt = wx.StaticText(self, wx.ID_ANY, 'Orientation min ')
-        self.sp_or_min_field = wx.TextCtrl(self, wx.ID_ANY, value=str(self.sp_or_min), name='sp_or_min')
+        self.sp_or_min_field = wx.TextCtrl(self, wx.ID_ANY, value=f'{self.sp_or_min}', name='sp_or_min')
         sp_or_max_txt = wx.StaticText(self, wx.ID_ANY, 'Orientation max ')
-        self.sp_or_max_field = wx.TextCtrl(self, wx.ID_ANY, value=str(self.sp_or_max), name='sp_or_max')
+        self.sp_or_max_field = wx.TextCtrl(self, wx.ID_ANY, value=f'{self.sp_or_max}', name='sp_or_max')
 
         #Number of configs.
         n_sp_configs_txt = wx.StaticText(self, wx.ID_ANY, 'Number of configs ')
@@ -726,13 +759,13 @@ class InputDialog(wx.Dialog):
         
         #Windturbine options
         wtn_min_txt = wx.StaticText(self, wx.ID_ANY, 'Minimum turbines ')
-        self.wtn_min_field = wx.TextCtrl(self, wx.ID_ANY, value=str(self.wtn_min), name='wtn_min')
+        self.wtn_min_field = wx.TextCtrl(self, wx.ID_ANY, value=f'{self.wtn_min}', name='wtn_min')
         wtn_max_txt = wx.StaticText(self, wx.ID_ANY, 'Maximum turbines ')
-        self.wtn_max_field = wx.TextCtrl(self, wx.ID_ANY, value=str(self.wtn_max), name='wtn_max')
+        self.wtn_max_field = wx.TextCtrl(self, wx.ID_ANY, value=f'{self.wtn_max}', name='wtn_max')
         turbine_height_txt = wx.StaticText(self, wx.ID_ANY, 'Turbine height ')
-        self.turbine_height_field = wx.TextCtrl(self, wx.ID_ANY, value=str(self.turbine_height), name='turbine_height')
+        self.turbine_height_field = wx.TextCtrl(self, wx.ID_ANY, value=f'{self.turbine_height}', name='turbine_height')
         ter_txt = wx.StaticText(self, wx.ID_ANY, 'Terrain factor ')
-        self.ter_field = wx.TextCtrl(self, wx.ID_ANY, value=str(self.terrain_factor), name='terrain_factor')
+        self.ter_field = wx.TextCtrl(self, wx.ID_ANY, value=f'{self.terrain_factor}', name='terrain_factor')
         wt_type_txt = wx.StaticText(self, wx.ID_ANY, 'Type: ')
         wt_path= 'config{}turbines'.format(os.sep)
         self.wt_type_choice= wx.Choice(self, wx.ID_ANY, choices=[os.path.splitext(n)[0] for n in os.listdir(wt_path) if '.csv' in n])
@@ -745,13 +778,13 @@ class InputDialog(wx.Dialog):
 
         #Genetic algorithm options
         demand_txt = wx.StaticText(self, wx.ID_ANY, 'Demand ')
-        self.demand_field = wx.TextCtrl(self, wx.ID_ANY, value=str(self.demand), name='demand')
+        self.demand_field = wx.TextCtrl(self, wx.ID_ANY, value=f'{self.demand}', name='demand')
         generations_txt = wx.StaticText(self, wx.ID_ANY, 'Generations ')
-        self.generations_field = wx.TextCtrl(self, wx.ID_ANY, value=str(self.generations), name='generations')
+        self.generations_field = wx.TextCtrl(self, wx.ID_ANY, value=f'{self.generations}', name='generations')
         poolsize_txt = wx.StaticText(self, wx.ID_ANY, 'Poolsize ')
-        self.poolsize_field = wx.TextCtrl(self, wx.ID_ANY, value=str(self.poolsize), name='pool_size')
+        self.poolsize_field = wx.TextCtrl(self, wx.ID_ANY, value=f'{self.poolsize}', name='pool_size')
         m_rate_txt = wx.StaticText(self, wx.ID_ANY, 'Mutation rate ')
-        self.m_rate_field = wx.TextCtrl(self, wx.ID_ANY, value=str(self.m_rate), name='mutation_rate')
+        self.m_rate_field = wx.TextCtrl(self, wx.ID_ANY, value=f'{self.m_rate}', name='mutation_rate')
 
         ga_grid.AddMany([(demand_txt, 0, wx.ALL, 2), (self.demand_field, 0, wx.ALL, 2), (m_rate_txt, 0, wx.ALL, 2),
                          (self.m_rate_field, 0, wx.ALL, 2), (generations_txt, 0, wx.ALL, 2), (self.generations_field, 0, wx.ALL, 2),
@@ -763,15 +796,15 @@ class InputDialog(wx.Dialog):
         self.price_check = wx.RadioButton(self, wx.ID_ANY, 'Price')
 
         self.sp_price_txt = wx.StaticText(self, wx.ID_ANY, 'Solar panel (€/m²) ')
-        self.sp_price_field = wx.TextCtrl(self, wx.ID_ANY, value=str(self.sp_price), name='solar_panel_price')
+        self.sp_price_field = wx.TextCtrl(self, wx.ID_ANY, value=f'{self.sp_price}', name='solar_panel_price')
         self.wt_price_txt = wx.StaticText(self, wx.ID_ANY, 'Wind turbine (€/kWh) ')
-        self.wt_price_field = wx.TextCtrl(self, wx.ID_ANY, value=str(self.wt_price), name='wind_turbine_price')
+        self.wt_price_field = wx.TextCtrl(self, wx.ID_ANY, value=f'{self.wt_price}', name='wind_turbine_price')
         self.st_price_txt = wx.StaticText(self, wx.ID_ANY, 'Storage (€/kWh)')
-        self.st_price_field = wx.TextCtrl(self, wx.ID_ANY, value=str(self.st_price), name='storage_price')
+        self.st_price_field = wx.TextCtrl(self, wx.ID_ANY, value=f'{self.st_price}', name='storage_price')
         self.short_price_txt = wx.StaticText(self, wx.ID_ANY, 'Shortage (€/kWh) ')
-        self.short_price_field = wx.TextCtrl(self, wx.ID_ANY, value=str(self.shortage_price), name='shortage_price')
+        self.short_price_field = wx.TextCtrl(self, wx.ID_ANY, value=f'{self.shortage_price}', name='shortage_price')
         self.surplus_price_txt = wx.StaticText(self, wx.ID_ANY, 'Surplus price (€/kWh) ')
-        self.surplus_price_field = wx.TextCtrl(self, wx.ID_ANY, value=str(self.surplus_price), name='surplus_price')
+        self.surplus_price_field = wx.TextCtrl(self, wx.ID_ANY, value=f'{self.surplus_price}', name='surplus_price')
 
         self.price_grid.AddMany([(self.sp_price_txt, 0, wx.ALL, 2), (self.sp_price_field), 
                             (self.wt_price_txt, 0, wx.ALL, 2), (self.wt_price_field, 0, wx.ALL, 2),
@@ -910,8 +943,7 @@ class InputDialog(wx.Dialog):
             self.price_grid.Show(self.sp_price_field)
             self.price_grid.Show(self.wt_price_txt)
             self.price_grid.Show(self.wt_price_field)
-
-        if(self.power_check.GetValue()):
+        else:
             self.price_grid.Show(self.surplus_price_txt)
             self.price_grid.Show(self.surplus_price_field)
             self.price_grid.Hide(self.sp_price_txt)
@@ -929,42 +961,42 @@ class InputDialog(wx.Dialog):
         self.year_choice.Clear()
         self.year_choice.AppendItems(self.years)
 
-        self.lat_field.SetValue(str('%.3f'%self.location_obj.latitude))
-        self.lon_field.SetValue(str('%.3f'%self.location_obj.longitude))
-        self.ter_field.SetValue(str('%.3f'%self.location_obj.terrain))
+        self.lat_field.SetValue(f'{self.location_obj.latitude:.3f}')
+        self.lon_field.SetValue(f'{self.location_obj.longitude:.3f}')
+        self.ter_field.SetValue(f'{self.location_obj.terrain:.3f}')
 
     def update_fields(self):
         """
             Updates all the fields to the value that is stored in the corresponding value.
             Gets called when configs are loaded or when the 'cancel' button is clicked
         """
-        self.lat_field.SetValue(str('%.3f'%self.latitude))
-        self.lon_field.SetValue(str('%.3f'%self.longitude))
+        self.lat_field.SetValue(f'{self.latitude:.3f}')
+        self.lon_field.SetValue(f'{self.longitude:.3f}')
 
-        self.sp_eff_field.SetValue(str(self.sp_eff))
-        self.sp_area_min_field.SetValue(str(self.sp_area_min))
-        self.sp_area_max_field.SetValue(str(self.sp_area_max))
-        self.sp_ang_min_field.SetValue(str(self.sp_ang_min))
-        self.sp_ang_max_field.SetValue(str(self.sp_ang_max))
-        self.sp_or_min_field.SetValue(str(self.sp_or_min))
-        self.sp_or_max_field.SetValue(str(self.sp_or_max))
+        self.sp_eff_field.SetValue(f'{self.sp_eff}')
+        self.sp_area_min_field.SetValue(f'{self.sp_area_min}')
+        self.sp_area_max_field.SetValue(f'{self.sp_area_max}')
+        self.sp_ang_min_field.SetValue(f'{self.sp_ang_min}')
+        self.sp_ang_max_field.SetValue(f'{self.sp_ang_max}')
+        self.sp_or_min_field.SetValue(f'{self.sp_or_min}')
+        self.sp_or_max_field.SetValue(f'{self.sp_or_max}')
 
-        self.wtn_min_field.SetValue(str(self.wtn_min))
-        self.wtn_max_field.SetValue(str(self.wtn_max))
-        self.turbine_height_field.SetValue(str(self.turbine_height))
-        self.ter_field.SetValue(str('%.3f'%self.terrain_factor))
+        self.wtn_min_field.SetValue(f'{self.wtn_min}')
+        self.wtn_max_field.SetValue(f'{self.wtn_max}')
+        self.turbine_height_field.SetValue(f'{self.turbine_height}')
+        self.ter_field.SetValue(f'{self.terrain_factor:.3f}')
 
-        self.demand_field.SetValue(str(self.demand))
+        self.demand_field.SetValue(f'{self.demand}')
 
-        self.generations_field.SetValue(str(self.generations))
-        self.poolsize_field.SetValue(str(self.poolsize))
-        self.m_rate_field.SetValue(str(self.m_rate))
+        self.generations_field.SetValue(f'{self.generations}')
+        self.poolsize_field.SetValue(f'{self.poolsize}')
+        self.m_rate_field.SetValue(f'{self.m_rate}')
 
-        self.sp_price_field.SetValue(str(self.sp_price))
-        self.wt_price_field.SetValue(str(self.wt_price))
-        self.st_price_field.SetValue(str(self.st_price))
-        self.short_price_field.SetValue(str(self.shortage_price))
-        self.surplus_price_field.SetValue(str(self.surplus_price))
+        self.sp_price_field.SetValue(f'{self.sp_price}')
+        self.wt_price_field.SetValue(f'{self.wt_price}')
+        self.st_price_field.SetValue(f'{self.st_price}')
+        self.short_price_field.SetValue(f'{self.shortage_price}')
+        self.surplus_price_field.SetValue(f'{self.surplus_price}')
 
     def get_fields(self):
         """ 
@@ -1121,6 +1153,7 @@ class TrainTab(wx.Panel):
         self.sol_cost = 0
         self.win_cost = 0
         self.stor_cost = 0
+        self.tot_cost = 0
 
         self.n_sp_configs = 4
 
@@ -1162,7 +1195,7 @@ class TrainTab(wx.Panel):
         sol_output_grid = wx.FlexGridSizer(3, 5, 10, 10)
         win_output_grid = wx.FlexGridSizer(2, 2, 10, 10)
         stat_grid = wx.FlexGridSizer(3, 2, 10, 10)
-        cost_grid = wx.FlexGridSizer(3, 2, 10, 10)
+        cost_grid = wx.FlexGridSizer(4, 2, 10, 10)
 
         self.input_button = wx.Button(self, wx.ID_ANY, label='Set inputs')
         self.start_button = wx.Button(self, label='Start training')
@@ -1182,22 +1215,22 @@ class TrainTab(wx.Panel):
         self.progress = wx.Gauge(self, size=(400,20))
         
         sp_area_txt = wx.StaticText(self, wx.ID_ANY, 'Surfaces ')
-        self.sp_area_1_field = wx.TextCtrl(self, wx.ID_ANY|wx.TE_READONLY, value=str(self.sp_area_1))
-        self.sp_area_2_field = wx.TextCtrl(self, wx.ID_ANY|wx.TE_READONLY, value=str(self.sp_area_2))
-        self.sp_area_3_field = wx.TextCtrl(self, wx.ID_ANY|wx.TE_READONLY, value=str(self.sp_area_3))
-        self.sp_area_4_field = wx.TextCtrl(self, wx.ID_ANY|wx.TE_READONLY, value=str(self.sp_area_4))
+        self.sp_area_1_field = wx.TextCtrl(self, wx.ID_ANY|wx.TE_READONLY, value=f'{self.sp_area_1}')
+        self.sp_area_2_field = wx.TextCtrl(self, wx.ID_ANY|wx.TE_READONLY, value=f'{self.sp_area_2}')
+        self.sp_area_3_field = wx.TextCtrl(self, wx.ID_ANY|wx.TE_READONLY, value=f'{self.sp_area_3}')
+        self.sp_area_4_field = wx.TextCtrl(self, wx.ID_ANY|wx.TE_READONLY, value=f'{self.sp_area_4}')
 
         sp_ang_txt = wx.StaticText(self, wx.ID_ANY, 'Angles ')
-        self.sp_ang_1_field = wx.TextCtrl(self, wx.ID_ANY|wx.TE_READONLY, value=str(self.sp_ang_1))
-        self.sp_ang_2_field = wx.TextCtrl(self, wx.ID_ANY|wx.TE_READONLY, value=str(self.sp_ang_2))
-        self.sp_ang_3_field = wx.TextCtrl(self, wx.ID_ANY|wx.TE_READONLY, value=str(self.sp_ang_3))
-        self.sp_ang_4_field = wx.TextCtrl(self, wx.ID_ANY|wx.TE_READONLY, value=str(self.sp_ang_4))
+        self.sp_ang_1_field = wx.TextCtrl(self, wx.ID_ANY|wx.TE_READONLY, value=f'{self.sp_ang_1}')
+        self.sp_ang_2_field = wx.TextCtrl(self, wx.ID_ANY|wx.TE_READONLY, value=f'{self.sp_ang_2}')
+        self.sp_ang_3_field = wx.TextCtrl(self, wx.ID_ANY|wx.TE_READONLY, value=f'{self.sp_ang_3}')
+        self.sp_ang_4_field = wx.TextCtrl(self, wx.ID_ANY|wx.TE_READONLY, value=f'{self.sp_ang_4}')
 
         sp_or_txt = wx.StaticText(self, wx.ID_ANY, 'Orientations ')
-        self.sp_or_1_field = wx.TextCtrl(self, wx.ID_ANY|wx.TE_READONLY, value=str(self.sp_or_1))
-        self.sp_or_2_field = wx.TextCtrl(self, wx.ID_ANY|wx.TE_READONLY, value=str(self.sp_or_2))
-        self.sp_or_3_field = wx.TextCtrl(self, wx.ID_ANY|wx.TE_READONLY, value=str(self.sp_or_3))
-        self.sp_or_4_field = wx.TextCtrl(self, wx.ID_ANY|wx.TE_READONLY, value=str(self.sp_or_4))
+        self.sp_or_1_field = wx.TextCtrl(self, wx.ID_ANY|wx.TE_READONLY, value=f'{self.sp_or_1}')
+        self.sp_or_2_field = wx.TextCtrl(self, wx.ID_ANY|wx.TE_READONLY, value=f'{self.sp_or_2}')
+        self.sp_or_3_field = wx.TextCtrl(self, wx.ID_ANY|wx.TE_READONLY, value=f'{self.sp_or_3}')
+        self.sp_or_4_field = wx.TextCtrl(self, wx.ID_ANY|wx.TE_READONLY, value=f'{self.sp_or_4}')
 
         sol_output_grid.AddMany([(sp_area_txt, 0, wx.ALL, 2), (self.sp_area_1_field, 0, wx.ALL, 2), (self.sp_area_2_field, 0, wx.ALL, 2), 
                                  (self.sp_area_3_field, 0, wx.ALL, 2), (self.sp_area_4_field, 0, wx.ALL, 2),
@@ -1207,23 +1240,25 @@ class TrainTab(wx.Panel):
                                  (self.sp_or_3_field, 0, wx.ALL, 2), (self.sp_or_4_field, 0, wx.ALL, 2)])
 
         wt_n_txt = wx.StaticText(self, wx.ID_ANY, 'Turbines ')
-        self.wtn_field = wx.TextCtrl(self, wx.ID_ANY|wx.TE_READONLY, value=str(self.n_wt))
+        self.wtn_field = wx.TextCtrl(self, wx.ID_ANY|wx.TE_READONLY, value=f'{self.n_wt}')
         wt_h_txt = wx.StaticText(self, wx.ID_ANY, 'Turbine height (m) ')
-        self.wth_field = wx.TextCtrl(self, wx.ID_ANY|wx.TE_READONLY, value=str(self.wt_height))
+        self.wth_field = wx.TextCtrl(self, wx.ID_ANY|wx.TE_READONLY, value=f'{self.wt_height}')
 
         storage_txt = wx.StaticText(self, wx.ID_ANY, 'Power storage (kWh) ')
-        self.storage_field = wx.TextCtrl(self, wx.ID_ANY|wx.TE_READONLY, value=str(self.power_storage))
+        self.storage_field = wx.TextCtrl(self, wx.ID_ANY|wx.TE_READONLY, value=f'{self.power_storage}')
         surplus_txt = wx.StaticText(self, wx.ID_ANY, 'Power surplus (kWh) ')
-        self.surplus_field = wx.TextCtrl(self, wx.ID_ANY|wx.TE_READONLY, value=str(self.power_surplus))
+        self.surplus_field = wx.TextCtrl(self, wx.ID_ANY|wx.TE_READONLY, value=f'{self.power_surplus}')
         shortage_txt = wx.StaticText(self, wx.ID_ANY, 'Power shortage (kWh) ')
-        self.shortage_field = wx.TextCtrl(self, wx.ID_ANY|wx.TE_READONLY, value=str(self.power_shortage))
+        self.shortage_field = wx.TextCtrl(self, wx.ID_ANY|wx.TE_READONLY, value=f'{self.power_shortage}')
 
         sol_cost_txt = wx.StaticText(self, wx.ID_ANY, 'Solar cost (€) ')
-        self.sol_cost_field = wx.TextCtrl(self, wx.ID_ANY|wx.TE_READONLY, value=str(self.sol_cost))
+        self.sol_cost_field = wx.TextCtrl(self, wx.ID_ANY|wx.TE_READONLY, value=f'{self.sol_cost}')
         win_cost_txt = wx.StaticText(self, wx.ID_ANY, 'Wind cost (€) ')
-        self.win_cost_field = wx.TextCtrl(self, wx.ID_ANY|wx.TE_READONLY, value=str(self.win_cost))
+        self.win_cost_field = wx.TextCtrl(self, wx.ID_ANY|wx.TE_READONLY, value=f'{self.win_cost}')
         stor_cost_txt = wx.StaticText(self, wx.ID_ANY, 'Storage cost (€) ')
-        self.stor_cost_field = wx.TextCtrl(self, wx.ID_ANY|wx.TE_READONLY, value=str(self.stor_cost))
+        self.stor_cost_field = wx.TextCtrl(self, wx.ID_ANY|wx.TE_READONLY, value=f'{self.stor_cost}')
+        tot_cost_txt = wx.StaticText(self, wx.ID_ANY, 'Total cost (€) ')
+        self.tot_cost_field = wx.TextCtrl(self, wx.ID_ANY|wx.TE_READONLY, value =f'{self.tot_cost}')
 
         # Plot setup
         self.figure = Figure()
@@ -1250,7 +1285,8 @@ class TrainTab(wx.Panel):
 
         cost_grid.AddMany([(sol_cost_txt, 0, wx.ALL, 2), (self.sol_cost_field, 0, wx.ALL, 2),
                            (win_cost_txt, 0, wx.ALL, 2), (self.win_cost_field, 0, wx.ALL, 2),
-                           (stor_cost_txt, 0, wx.ALL, 2), (self.stor_cost_field, 0, wx.ALL, 2)])
+                           (stor_cost_txt, 0, wx.ALL, 2), (self.stor_cost_field, 0, wx.ALL, 2),
+                           (tot_cost_txt, 0, wx.ALL, 2), (self.tot_cost_field, 0, wx.ALL, 2)])
 
         sol_output_sizer.Add(sol_output_grid, 0, wx.ALL, 2)
         win_output_sizer.Add(win_output_grid, 0, wx.ALL, 2)
@@ -1258,8 +1294,8 @@ class TrainTab(wx.Panel):
         cost_sizer.Add(cost_grid, 0, wx.ALL, 2)
 
         top_left_sizer.AddMany([(sol_output_sizer, 0, wx.ALL, 2), (win_output_sizer, 0, wx.ALL, 2)])
-        top_middle_sizer.Add(stat_sizer, 0, wx.ALL, 2)
-        top_right_sizer.Add(cost_sizer, 0, wx.ALL, 2)
+        top_middle_sizer.Add(cost_sizer, 0, wx.ALL, 2)
+        top_right_sizer.Add(stat_sizer, 0, wx.ALL, 2)
 
         top_sizer.AddMany([(top_left_sizer, 0, wx.ALL, 0),
                            (top_middle_sizer, 0, wx.ALL, 0),
@@ -1294,31 +1330,32 @@ class TrainTab(wx.Panel):
     # Update the output field to the values stored in variables
     def update_outputs(self):
 
-        self.sp_area_1_field.SetValue(str(self.sp_area_1))
-        self.sp_area_2_field.SetValue(str(self.sp_area_2))
-        self.sp_area_3_field.SetValue(str(self.sp_area_3))
-        self.sp_area_4_field.SetValue(str(self.sp_area_4))
+        self.sp_area_1_field.SetValue(f'{self.sp_area_1}')
+        self.sp_area_2_field.SetValue(f'{self.sp_area_2}')
+        self.sp_area_3_field.SetValue(f'{self.sp_area_3}')
+        self.sp_area_4_field.SetValue(f'{self.sp_area_4}')
 
-        self.sp_ang_1_field.SetValue(str(self.sp_ang_1))
-        self.sp_ang_2_field.SetValue(str(self.sp_ang_2))
-        self.sp_ang_3_field.SetValue(str(self.sp_ang_3))
-        self.sp_ang_4_field.SetValue(str(self.sp_ang_4))
+        self.sp_ang_1_field.SetValue(f'{self.sp_ang_1}')
+        self.sp_ang_2_field.SetValue(f'{self.sp_ang_2}')
+        self.sp_ang_3_field.SetValue(f'{self.sp_ang_3}')
+        self.sp_ang_4_field.SetValue(f'{self.sp_ang_4}')
 
-        self.sp_or_1_field.SetValue(str(self.sp_or_1))
-        self.sp_or_2_field.SetValue(str(self.sp_or_2))
-        self.sp_or_3_field.SetValue(str(self.sp_or_3))
-        self.sp_or_4_field.SetValue(str(self.sp_or_4))
+        self.sp_or_1_field.SetValue(f'{self.sp_or_1}')
+        self.sp_or_2_field.SetValue(f'{self.sp_or_2}')
+        self.sp_or_3_field.SetValue(f'{self.sp_or_3}')
+        self.sp_or_4_field.SetValue(f'{self.sp_or_4}')
 
-        self.wtn_field.SetValue(str(self.n_wt))
-        self.wth_field.SetValue(str(self.wt_height))
+        self.wtn_field.SetValue(f'{self.n_wt}')
+        self.wth_field.SetValue(f'{self.wt_height}')
 
-        self.storage_field.SetValue(str(int(self.power_storage)))
-        self.surplus_field.SetValue(str(int(self.power_surplus)))
-        self.shortage_field.SetValue(str(int(self.power_shortage)))
+        self.storage_field.SetValue(f'{int(self.power_storage)}')
+        self.surplus_field.SetValue(f'{int(self.power_surplus)}')
+        self.shortage_field.SetValue(f'{int(self.power_shortage)}')
 
-        self.sol_cost_field.SetValue(str(int(self.sol_cost)))
-        self.win_cost_field.SetValue(str(int(self.win_cost)))
-        self.stor_cost_field.SetValue(str(int(self.stor_cost)))
+        self.sol_cost_field.SetValue(f'{self.sol_cost:,}')
+        self.win_cost_field.SetValue(f'{self.win_cost:,}')
+        self.stor_cost_field.SetValue(f'{self.stor_cost:,}')
+        self.tot_cost_field.SetValue(f'{self.tot_cost:,}')
 
     # Open the input dialog when the input button is clicked
     def on_inputbutton_clicked(self, event):
@@ -1407,9 +1444,10 @@ class TrainTab(wx.Panel):
         self.power_surplus = stats['total_surplus']
         self.power_storage = stats['total_storage']
         self.power_shortage = stats['total_shortage']
-        self.sol_cost = stats['solar_cost']
-        self.win_cost = stats['wind_cost']
-        self.stor_cost = stats['storage_cost']
+        self.sol_cost = int(stats['solar_cost'])
+        self.win_cost = int(stats['wind_cost'])
+        self.stor_cost = int(stats['storage_cost'])
+        self.tot_cost = self.stor_cost + self.win_cost + self.sol_cost
 
         self.update_outputs()
 
@@ -1497,7 +1535,9 @@ class TrainTab(wx.Panel):
         params = {'location':Location(self.dialog.location), 'year_choice':self.dialog.year_choice.GetString(self.dialog.year_choice.GetCurrentSelection()),
                   'terrain_factor':self.dialog.terrain_factor, 'latitude':self.dialog.latitude,
                   'longitude':self.dialog.longitude,
-                  'windfeatures':windfeatures,'solarfeatures':solarfeatures,'sp_eff':self.dialog.sp_eff}
+                  'windfeatures':windfeatures,'solarfeatures':solarfeatures,'sp_eff':self.dialog.sp_eff,
+                  'sp_price': self.dialog.sp_price, 'wt_price':self.dialog.wt_price, 'st_price': self.dialog.st_price,
+                  'short_price':self.dialog.shortage_price , 'surp_price':self.dialog.surplus_price}
 
         with wx.FileDialog(self, "Save trianing", defaultFile='Training_output', wildcard='Excel files(*.xlsx)|*.*',
                            style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT) as fileDialog:
