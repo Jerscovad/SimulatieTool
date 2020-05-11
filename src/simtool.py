@@ -1539,6 +1539,7 @@ class TrainTab(wx.Panel):
                   'longitude':self.dialog.longitude,
                   'windfeatures':windfeatures,'solarfeatures':solarfeatures,'sp_eff':self.dialog.sp_eff,
                   'sp_price': self.dialog.sp_price, 'wt_price':self.dialog.wt_price, 'st_price': self.dialog.st_price,
+                  'wt_type':self.dialog.wt_type_choice.GetString(self.dialog.wt_type_choice.GetSelection()),
                   'short_price':self.dialog.shortage_price , 'surp_price':self.dialog.surplus_price}
 
         with wx.FileDialog(self, "Save trianing", defaultFile='Training_output', wildcard='Excel files(*.xlsx)|*.*',
