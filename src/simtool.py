@@ -102,10 +102,8 @@ class FileWriter(threading.Thread):
         self.sp_price = sp_price
         self.wt_price = wt_price
         self.st_price = st_price
-        if short_price:
-            self.short_price = short_price
-        if surp_price:
-            self.surp_price = surp_price
+        self.short_price = short_price
+        self.surp_price = surp_price
 
     def run(self):
 
