@@ -212,12 +212,13 @@ class Simulator():
         angle_features = solar_features[1::3]
         orientation_features = solar_features[2::3]
 
-        wind, _ = self.calc_wind(wind_features)
-        solar, _ = self.calc_solar(Az=orientation_features, Inc=angle_features, sp_area=surface_features, sp_eff=sp_eff)
+        p_wind, e_wind  = self.calc_wind(wind_features)
+        p_solar, e_solar= self.calc_solar(Az=orientation_features, Inc=angle_features, sp_area=surface_features, sp_eff=sp_eff)
 
-        total_power = wind + solar
+        total_power = p_wind + p_solar
+        total_energy = e_wind + e_solar
 
-        return total_power, [wind.tolist(), solar.tolist()]
+        return total_power, total_energy
 
 if __name__ == '__main__':
 
