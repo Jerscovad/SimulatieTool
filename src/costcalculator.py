@@ -26,10 +26,9 @@ class CostCalculator():
         self.surplus_cost_per_kw = surplus_cost_per_kw
         self.train_by_price = train_by_price
         self.windturbine = windturbine
+        self.turbine_power = windturbine.get_max_power()
 
     def calculate_cost(self, kwh_array, sp_sm, turbines):
-        # make a copy of the input array so we don't alter the original one
-        kwh_array = copy(kwh_array)
 
         surplus_array = kwh_array - self.target_kw
         cumulative_array = np.cumsum(surplus_array)
@@ -53,8 +52,7 @@ class CostCalculator():
 
         # windturbine calculation
         # Max power * number of turbines * cost per kw
-        turbine_power = self.windturbine.get_max_power()
-        wm_cost = turbine_power * turbines * self.wt_cost_per_kw
+        wm_cost = self.turbine_power * turbines * self.wt_cost_per_kw
 
         # Check which cost is requested.
         if self.train_by_price:
@@ -90,8 +88,7 @@ class CostCalculator():
                 cumulative_array = cumulative_array[new_start:]
                 declining = declining[new_start:]
 
-        turbine_power = self.windturbine.get_max_power()
-        wm_cost = turbine_power * turbines * self.wt_cost_per_kw
+        wm_cost = self.turbine_power * turbines * self.wt_cost_per_kw
 
         # calculate the final cost
         solar_cost = sp_sm * self.sp_cost_per_sm
