@@ -845,6 +845,8 @@ class InputDialog(wx.Dialog):
         vbox.Add(sol_input_sizer, 0, wx.ALL, 2)
         vbox.Add(hbutton_sizer, 0, wx.ALL, 10)
 
+        # Adapt screen to fit smaller displays
+        self.EnableLayoutAdaptation(True)
         #Load defaults after window is made
         self.load_defaults()
         self.price_check.SetValue(True)
