@@ -102,8 +102,10 @@ class FileWriter(threading.Thread):
         self.sp_price = sp_price
         self.wt_price = wt_price
         self.st_price = st_price
-        self.short_price = short_price
-        self.surp_price = surp_price
+        if short_price:
+            self.short_price = short_price
+        if supr_price:
+            self.surp_price = surp_price
 
     def run(self):
 
@@ -174,10 +176,11 @@ class FileWriter(threading.Thread):
         parametersheet.write('C25', self.wt_price, money)
         parametersheet.write('B26', 'Storage price', bold)
         parametersheet.write('C26', self.st_price, money)
-        parametersheet.write('B27', 'Surplus price')
-        parametersheet.write('C27', self.surp_price, money)
-        parametersheet.write('B28', 'Shortage price')
-        parametersheet.write('C28', self.short_price, money)
+        if self.surp_price:
+            parametersheet.write('B27', 'Surplus price')
+            parametersheet.write('C27', self.surp_price, money)
+            parametersheet.write('B28', 'Shortage price')
+            parametersheet.write('C28', self.short_price, money)
 
         datasheet = data_file.add_worksheet('Output')
 
@@ -604,7 +607,8 @@ class SimTab(wx.Panel):
                   'terrain_factor':self.terrain_factor, 'latitude':self.latitude,'longitude':self.longitude,
                   'windfeatures':windfeatures,'solarfeatures':solarfeatures,'sp_eff':self.sp_eff,
                   'wt_type':self.wt_type_choice.GetString(self.wt_type_choice.GetCurrentSelection()), 
-                  'sp_price': self.sp_price, 'wt_price': self.wt_price, 'st_price':self.st_price}
+                  'sp_price': self.sp_price, 'wt_price': self.wt_price, 'st_price':self.st_price,
+                  'surp_price': 0, 'short_price': 0}
 
         with wx.FileDialog(self, "Save simulation", defaultFile='Simulation_output', wildcard='Excel files(*.xlsx)|*.*',
                            style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT) as fileDialog:
