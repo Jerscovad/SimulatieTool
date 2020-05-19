@@ -6,9 +6,9 @@ from location import Location
 import time
 import os
 
-#remove warning filter after devide by zero is solved!
-import warnings
-warnings.filterwarnings("ignore")
+# #remove warning filter after devide by zero is solved!
+# import warnings
+# warnings.filterwarnings("ignore")
 
 KAPPA = 1.041  # for calculations in radians
 IO = 1366.1  # solar constant(w/m^2)
@@ -37,7 +37,7 @@ class Simulator():
         self.Windturbine = Windturbine
 
         # variables from data file
-        file_name = 'Data'+ os.sep + self.location.name + os.sep + year + '.csv'
+        file_name = f'Data{os.sep}{self.location.name}{os.sep}{year}.csv'
         self.import_data = pd.read_csv(file_name, index_col=0)
         self.ghi = self.import_data.iloc[:, 5].values
         self.dni = self.import_data.iloc[:, 7].values
@@ -87,9 +87,13 @@ class Simulator():
 
         # determination of bin with eps
         s_bin = np.ones(len(self.time))  # bin 1 is overcast sky , bin 8 is clear sky
-        Kzen3 = KAPPA * Zen ** 3
 
-        eps = ((DHI + self.dni) / DHI + KAPPA * Zen ** 3) / (1 + KAPPA * Zen ** 3)
+        # eps = ((DHI + self.dni) / DHI + KAPPA * Zen ** 3) / (1 + KAPPA * Zen ** 3)
+
+
+        eps_numerator = np.divide((DHI + self.dni), DHI, out=np.zeros_like(DHI), where=DHI!=0) + KAPPA * Zen ** 3
+        eps_nominator = 1 + KAPPA * Zen ** 3
+        eps = np.divide(eps_numerator, eps_nominator, out=np.zeros_like(eps_nominator), where=eps_numerator!=0)
 
         s_bin[np.logical_and(eps >= 1.065, eps < 1.23)] = 2
         s_bin[np.logical_and(eps >= 1.23, eps < 1.5)] = 3
@@ -99,6 +103,14 @@ class Simulator():
         s_bin[np.logical_and(eps >= 4.5, eps < 6.2)] = 7
         s_bin[(eps >= 6.2)] = 8
 
+        # a = pd.DataFrame()
+        # a['eps'] = eps
+        # a['eps2'] = eps2
+        # a['DHI'] = DHI
+        # a['dni'] =self.dni
+        # a['Zen'] = Zen
+
+        # a.to_excel('data.xlsx')
         # calculation of relative air mass
         M = 1 / hai
         M[sel < 2] = 20
@@ -163,15 +175,7 @@ class Simulator():
 
         P_out = total_output / 1000  # kW
 
-        """        
-        Solar calculations according to Matlab script
-        E = total_output/(3600)*10^-6
-
-        for some reason matlab does not devide by 3600 resulting in the calculation
-        having the same outcome as the one below
-
-        """
-        e_temp = total_output/1000 #kWh
+        e_temp = total_output/1000
         E_out = np.cumsum(e_temp)
 
         return P_out, E_out
@@ -200,10 +204,10 @@ class Simulator():
         value_1 = self.Windturbine.power_curve[index_1]
         value_2 = self.Windturbine.power_curve[index_2]
 
-        P_out_single = (value_1 * difference_2 + value_2 * difference_1) / difference  # kW
-        P_out = P_out_single * n_turbines  # kW
+        P_out_single = (value_1 * difference_2 + value_2 * difference_1) / difference
+        P_out = P_out_single * n_turbines
 
-        E_out = np.cumsum(P_out)  # kWh
+        E_out = np.cumsum(P_out)
 
         return P_out, E_out
 
