@@ -18,6 +18,8 @@ from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 from matplotlib.backends.backend_wx import NavigationToolbar2Wx
 from matplotlib.figure import Figure
 
+WT_PATH = f'config{os.sep}turbines'
+
 myEVT_SAVEDONE = wx.NewEventType()
 EVT_SAVEDONE = wx.PyEventBinder(myEVT_SAVEDONE, 1)
 
@@ -591,8 +593,7 @@ class SimTab(wx.Panel):
         ter_txt = wx.StaticText(self, wx.ID_ANY, 'Terrain factor ')
         self.ter_field = wx.TextCtrl(self, wx.ID_ANY, value=f'{self.terrain_factor}')
         wt_type_txt = wx.StaticText(self, wx.ID_ANY, 'Type: ')
-        wt_path = f'config{os.sep}turbines'
-        self.wt_type_choice = wx.Choice(self, wx.ID_ANY, choices=[os.path.splitext(n)[0] for n in os.listdir(wt_path) if '.csv' in n])
+        self.wt_type_choice = wx.Choice(self, wx.ID_ANY, choices=[os.path.splitext(n)[0] for n in os.listdir(WT_PATH) if '.csv' in n])
 
         self.save_button = wx.Button(self, wx.ID_ANY, label='Save simulation')
         self.save_button.Bind(wx.EVT_BUTTON, self.on_save_button_clicked)
@@ -1025,8 +1026,7 @@ class InputDialog(wx.Dialog):
         ter_txt = wx.StaticText(self, wx.ID_ANY, 'Terrain factor ')
         self.ter_field = wx.TextCtrl(self, wx.ID_ANY, value=f'{self.terrain_factor}', name='terrain_factor')
         wt_type_txt = wx.StaticText(self, wx.ID_ANY, 'Type: ')
-        wt_path= 'config{}turbines'.format(os.sep)
-        self.wt_type_choice= wx.Choice(self, wx.ID_ANY, choices=[os.path.splitext(n)[0] for n in os.listdir(wt_path) if '.csv' in n])
+        self.wt_type_choice= wx.Choice(self, wx.ID_ANY, choices=[os.path.splitext(n)[0] for n in os.listdir(WT_PATH) if '.csv' in n])
 
         win_input_grid.AddMany([(wtn_min_txt, 0, wx.ALL, 2), (self.wtn_min_field, 0, wx.ALL, 2),
                                 (wtn_max_txt, 0, wx.ALL, 2), (self.wtn_max_field, 0, wx.ALL, 2),
@@ -1828,6 +1828,81 @@ class TrainTab(wx.Panel):
         self.progress.SetValue(0)
         self.start_button.Enable()
 
+class TurbineDialog(wx.Dialog):
+    def __init__(self, parent):
+        wx.Dialog.__init__(self, parent, title='Turbine curve')
+
+        self.windcurve = None
+        self.powercurve = None
+
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        grid = wx.FlexGridSizer(2, 2, 10, 10)
+        gridbox = wx.BoxSizer(wx.HORIZONTAL)
+        optionbox = wx.BoxSizer(wx.HORIZONTAL)
+        choicebox = wx.BoxSizer(wx.HORIZONTAL)
+
+        self.save_button = wx.Button(self, wx.ID_ANY, label='Save ')
+        self.name_field = wx.TextCtrl(self, wx.ID_ANY, value= '')
+        self.turbine_choice = wx.Choice(self, wx.ID_ANY, choices=[os.path.splitext(n)[0] for n in os.listdir(WT_PATH) if '.csv' in n])
+        
+        self.turbine_choice.Bind(wx.EVT_CHOICE, self.on_turbine_selected)
+        self.save_button.Bind(wx.EVT_BUTTON, self.on_save_turbine)
+
+        self.wind_txt = wx.StaticText(self, wx.ID_ANY, 'Wind curve ')
+        self.wind_field = wx.TextCtrl(self, wx.ID_ANY, value=f'{self.windcurve}', size=(500,25))
+
+        self.power_txt = wx.StaticText(self, wx.ID_ANY, 'Power curve ')
+        self.power_field = wx.TextCtrl(self, wx.ID_ANY, value=f'{self.powercurve}', size=(500,25))
+
+        grid.AddMany([(self.wind_txt, 0, wx.ALL, 2), (self.wind_field, 0 ,wx.ALL, 2),
+                      (self.power_txt, 0, wx.ALL, 2), (self.power_field, 0, wx.ALL, 2)])
+
+        choicebox.Add(self.turbine_choice, 0, wx.ALL, 2)
+        gridbox.Add(grid, 0, wx.ALL, 2)
+        optionbox.AddMany([(self.save_button, 0, wx.ALL, 2), (self.name_field, 0 , wx.ALL, 2)])
+        
+        sizer.AddMany([(choicebox, 0, wx.ALL, 2), (gridbox, 0, wx.ALL, 2), (optionbox, 0, wx.ALL, 2)])
+        self.SetSizer(sizer)
+        self.Fit()
+
+    def load_turbine(self, ttype):
+        turbine = pd.read_csv(f'config{os.sep}turbines{os.sep}{ttype}.csv', index_col=0)
+        self.windcurve = turbine.wind.values.tolist()
+        self.powercurve = turbine.power.values.tolist()
+        self.power_field.SetValue(f'{self.powercurve}'.replace('[','').replace(']',''))
+        self.wind_field.SetValue(f'{self.windcurve}'.replace('[','').replace(']',''))
+        self.name_field.SetValue(ttype)
+
+    def on_save_turbine(self, event):
+        ttype = self.name_field.GetValue()
+        path = f'config{os.sep}turbines{os.sep}{ttype}.csv'
+
+        # check if the file already exists and warm user if so.
+        if os.path.exists(path):
+            with  wx.MessageDialog(self, 'This file already exists.\nIf you save under the same name file will be overwritten.\nContinue?', 'Warning', wx.YES_NO) as mesbox:
+                if mesbox.ShowModal() == wx.ID_NO:
+                    return
+                self.save_turbine(path)
+        else:
+            self.save_turbine(path)
+        wx.MessageBox('New turbine saved succesfully', 'Saved', wx.OK)
+
+    def save_turbine(self, path):
+        # convert strings to int lists
+        windcurve = list(map(float,self.wind_field.GetValue().split(',')))
+        powercurve = list(map(int,self.power_field.GetValue().split(',')))
+        # create pandas dataframe and save it
+        dataframe = pd.DataFrame()
+        dataframe['power'] = powercurve
+        dataframe['wind'] = windcurve
+        dataframe.to_csv(path)
+
+
+    def on_turbine_selected(self, event):
+        ttype = self.turbine_choice.GetString(self.turbine_choice.GetCurrentSelection())
+        self.load_turbine(ttype)
+
+
 class MainFrame(wx.Frame):
     def __init__(self):
         wx.Frame.__init__(self, None, title='Simtool')
@@ -1838,6 +1913,7 @@ class MainFrame(wx.Frame):
         # Seperate tab objects for simulating and training
         tab1 = SimTab(nb)
         tab2 = TrainTab(nb)
+        self.turbine_dialog= TurbineDialog(self)
 
         # Add the tabs to the botebook
         nb.AddPage(tab1, 'Simulation')
@@ -1874,8 +1950,7 @@ class MainFrame(wx.Frame):
 
     # Windturbine editor for adding and editing windturbine curves.
     def on_turbine_editor(self, id):
-        info = 'In the future there will be an editor\nto add and edit windturbine settings.'
-        wx.MessageBox(info, 'Turbine editor', wx.OK)
+        self.turbine_dialog.Show()
 
 if __name__ == "__main__":
     app = wx.App()
