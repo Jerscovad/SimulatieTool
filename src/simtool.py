@@ -85,7 +85,7 @@ class FileWriter(threading.Thread):
     """
     def __init__(self, parent, path, location, year_choice, terrain_factor, latitude, 
                  longitude, windfeatures, solarfeatures, sp_eff, wt_type, sp_price, 
-                 st_price, wt_price, short_price, surp_price):
+                 st_price, wt_price, short_price, surp_price, demand):
 
         threading.Thread.__init__(self, daemon=True)
         self.parent = parent
@@ -104,6 +104,7 @@ class FileWriter(threading.Thread):
         self.st_price = st_price
         self.short_price = short_price
         self.surp_price = surp_price
+        self.demand = demand
 
     def run(self):
 
@@ -113,14 +114,32 @@ class FileWriter(threading.Thread):
         P_sp,E_sp = sim.calc_solar(Az=self.solarfeatures[2::3], Inc=self.solarfeatures[1::3], sp_area=self.solarfeatures[0::3], sp_eff=self.sp_eff)
         P_tot,E_tot = sim.calc_total_power(self.solarfeatures, self.windfeatures, self.sp_eff)
 
-        data = {'P_wt':P_wt,'E_wt':E_wt, 'P_sp':P_sp, 'E_sp':E_sp, 'P_tot':P_tot, 'E_tot':E_tot}
+        data = {'P_wt':P_wt,'E_wt':E_wt, 'P_sp':P_sp, 'E_sp':E_sp, 'P_tot':P_tot,
+                'E_tot':E_tot}
+        dataAvg = {'P_wt':np.mean(np.reshape(P_wt[:8760], (365,24)), axis=1),
+                   'E_wt':np.mean(np.reshape(E_wt[:8760], (365,24)), axis=1), 
+                   'P_sp':np.mean(np.reshape(P_sp[:8760], (365,24)), axis=1), 
+                   'E_sp':np.mean(np.reshape(E_sp[:8760], (365,24)), axis=1), 
+                   'P_tot':np.mean(np.reshape(P_tot[:8760], (365,24)), axis=1), 
+                   'E_tot':np.mean(np.reshape(E_tot[:8760], (365,24)), axis=1)}
+        if self.demand:
+            P_dem = np.array([self.demand for i in range(len(P_wt))])
+            E_dem = np.cumsum(P_dem)
+            data['P_dem'] = P_dem
+            data['E_dem'] = E_dem
+            dataAvg['P_dem'] =np.mean(np.reshape(P_dem[:8760], (365,24)), axis=1)
+            dataAvg['E_dem'] =np.mean(np.reshape(E_dem[:8760], (365,24)), axis=1)
 
-        self.write_data(data)
+        calculator = CostCalculator(self.sp_price, self.st_price, self.demand, self.short_price, self.wt_price, 
+                 self.surp_price, train_by_price=True, windturbine=Windturbine(self.turbine_type))
+        stats = calculator.get_stats(P_tot, np.sum(self.solarfeatures[0::3]), self.windfeatures[0])
+
+        self.write_data(data, dataAvg,stats)
 
         evt = SaveDoneEvent(myEVT_SAVEDONE, -1, filename=self.path)
         wx.PostEvent(self.parent, evt)
 
-    def write_data(self, data):
+    def write_data(self, data, dataAvg, stats):
         
         data_file = xlw.Workbook(self.path)
         bold = data_file.add_format({'bold': True})
@@ -140,45 +159,82 @@ class FileWriter(threading.Thread):
         parametersheet.write('C6', self.terrain_factor)
         parametersheet.write('B7', 'N Windturbines', bold)
         parametersheet.write('C7', self.windfeatures[0])
-        parametersheet.write('B8', 'Rotor height', bold)
-        parametersheet.write('C8', self.windfeatures[1])
-        parametersheet.write('B10', 'Sp Surface 1', bold)
-        parametersheet.write('C10', self.solarfeatures[0])
-        parametersheet.write('B11', 'Sp Angle 1', bold)
-        parametersheet.write('C11', self.solarfeatures[1])
-        parametersheet.write('B12', 'Sp Orientation 1', bold)
-        parametersheet.write('C12', self.solarfeatures[2])
-        parametersheet.write('B13', 'Sp Surface 2', bold)
-        parametersheet.write('C13', self.solarfeatures[3])
-        parametersheet.write('B14', 'Sp Angle 2', bold)
-        parametersheet.write('C14', self.solarfeatures[4])
-        parametersheet.write('B15', 'Sp Orientation 2', bold)
-        parametersheet.write('C15', self.solarfeatures[5])
-        parametersheet.write('B16', 'Sp Surface 3', bold)
-        parametersheet.write('C16', self.solarfeatures[6])
-        parametersheet.write('B17', 'Sp Angle 3', bold)
-        parametersheet.write('C17', self.solarfeatures[7])
-        parametersheet.write('B18', 'Sp Orientation 3', bold)
-        parametersheet.write('C18', self.solarfeatures[8])
-        parametersheet.write('B19', 'Sp Surface 4', bold)
-        parametersheet.write('C19', self.solarfeatures[9])
-        parametersheet.write('B20', 'Sp Angle 4', bold)
-        parametersheet.write('C20', self.solarfeatures[10])
-        parametersheet.write('B21', 'Sp Orientation 4', bold)
-        parametersheet.write('C21', self.solarfeatures[11])
-        parametersheet.write('B22', 'Sp Efficiency', bold)
-        parametersheet.write('C22', self.sp_eff)
-        parametersheet.write('B24', 'Solar price', bold)
-        parametersheet.write('C24', self.sp_price, money)
-        parametersheet.write('B25', 'Turbine price', bold)
-        parametersheet.write('C25', self.wt_price, money)
-        parametersheet.write('B26', 'Storage price', bold)
-        parametersheet.write('C26', self.st_price, money)
+        parametersheet.write('B8', 'Tubrine type', bold)
+        parametersheet.write('C8', self.turbine_type)
+        parametersheet.write('B9', 'Rotor height', bold)
+        parametersheet.write('C9', self.windfeatures[1])
+        parametersheet.write('B11', 'Sp Surface 1', bold)
+        parametersheet.write('C11', self.solarfeatures[0])
+        parametersheet.write('B12', 'Sp Angle 1', bold)
+        parametersheet.write('C12', self.solarfeatures[1])
+        parametersheet.write('B13', 'Sp Orientation 1', bold)
+        parametersheet.write('C13', self.solarfeatures[2])
+        parametersheet.write('B14', 'Sp Surface 2', bold)
+        parametersheet.write('C14', self.solarfeatures[3])
+        parametersheet.write('B15', 'Sp Angle 2', bold)
+        parametersheet.write('C15', self.solarfeatures[4])
+        parametersheet.write('B16', 'Sp Orientation 2', bold)
+        parametersheet.write('C16', self.solarfeatures[5])
+        parametersheet.write('B17', 'Sp Surface 3', bold)
+        parametersheet.write('C17', self.solarfeatures[6])
+        parametersheet.write('B18', 'Sp Angle 3', bold)
+        parametersheet.write('C18', self.solarfeatures[7])
+        parametersheet.write('B19', 'Sp Orientation 3', bold)
+        parametersheet.write('C19', self.solarfeatures[8])
+        parametersheet.write('B20', 'Sp Surface 4', bold)
+        parametersheet.write('C20', self.solarfeatures[9])
+        parametersheet.write('B21', 'Sp Angle 4', bold)
+        parametersheet.write('C21', self.solarfeatures[10])
+        parametersheet.write('B22', 'Sp Orientation 4', bold)
+        parametersheet.write('C22', self.solarfeatures[11])
+        parametersheet.write('B23', 'Sp Efficiency', bold)
+        parametersheet.write('C23', self.sp_eff)
+        parametersheet.write('B25', 'Solar price', bold)
+        parametersheet.write('C25', self.sp_price, money)
+        parametersheet.write('B26', 'Turbine price', bold)
+        parametersheet.write('C26', self.wt_price, money)
+        parametersheet.write('B27', 'Storage price', bold)
+        parametersheet.write('C27', self.st_price, money)
         if self.surp_price:
-            parametersheet.write('B27', 'Surplus price')
-            parametersheet.write('C27', self.surp_price, money)
-            parametersheet.write('B28', 'Shortage price')
-            parametersheet.write('C28', self.short_price, money)
+            parametersheet.write('B28', 'Surplus price', bold)
+            parametersheet.write('C28', self.surp_price, money)
+            parametersheet.write('B29', 'Shortage price', bold)
+            parametersheet.write('C29', self.short_price, money)
+
+        if self.demand:
+            parametersheet.write('B31', 'Demand', bold)
+            parametersheet.write('C31', self.demand)
+
+        cost_sheet = data_file.add_worksheet('Cost')
+
+        cost_sheet.write('B2', 'Input prices', bold)
+        cost_sheet.write('B3', 'Solar cost per m^2', bold)
+        cost_sheet.write('C3', self.sp_price, money)
+        cost_sheet.write('B4', 'Turbine price per kW', bold)
+        cost_sheet.write('C4', self.wt_price, money)
+        cost_sheet.write('B5', 'Storage price per kWh', bold)
+        cost_sheet.write('C5', self.st_price, money)
+
+        cost_sheet.write('B7', 'Cost output', bold)
+        cost_sheet.write('B8', 'Total cost', bold)
+        cost_sheet.write('C8', stats['cost'],money)
+        cost_sheet.write('B9', 'Solar cost', bold)
+        cost_sheet.write('C9', stats['solar_cost'], money)
+        cost_sheet.write('B10', 'Windturbine cost', bold)
+        cost_sheet.write('C10', stats['wind_cost'], money)
+        cost_sheet.write('B11', 'Storage cost', bold)
+        cost_sheet.write('C11', stats['storage_cost'], money)
+
+        cost_chart = data_file.add_chart({'type':'pie'})
+
+        cost_chart.add_series({'name': 'Costs',
+                               'categories': '=Cost!$B$9:$B$11',
+                               'values':     '=Cost!$C$9:$C$11',
+                               'points': [{'fill': {'color': '#FF9900'}},
+                                          {'fill': {'color': '#4287F5'}},
+                                          {'fill': {'color': '#23BF00'}},],})
+
+        cost_sheet.insert_chart('F2', cost_chart)
 
         datasheet = data_file.add_worksheet('Output')
 
@@ -190,12 +246,207 @@ class FileWriter(threading.Thread):
         datasheet.write('D2', 'Wind power', bold)
         datasheet.write_column('D3', data['P_wt'])
         datasheet.write('E2', 'Wind Energy', bold)
-        datasheet.write_column('E3' , data['E_wt'])
+        datasheet.write_column('E3' ,data['E_wt'])
         datasheet.write('F2', 'Total Power', bold)
         datasheet.write_column('F3', data['P_tot'])
         datasheet.write('G2', 'Total Energy', bold)
         datasheet.write_column('G3', data['E_tot'])
+        if self.demand:
+            datasheet.write('H2', 'Demand', bold)
+            datasheet.write_column('H3', data['P_dem'])
+            datasheet.write('I2', 'Demand', bold)
+            datasheet.write_column('I3', data['E_dem'])
+
+        datasheet.write('K1', 'Daily output', bold)
+        datasheet.write('K2', 'Solar Power', bold)
+        datasheet.write_column('K3', dataAvg['P_sp'])
+        datasheet.write('L2', 'Solar Energy', bold)
+        datasheet.write_column('L3', dataAvg['E_sp'])
+        datasheet.write('M2', 'Wind power', bold)
+        datasheet.write_column('M3', dataAvg['P_wt'])
+        datasheet.write('N2', 'Wind Energy', bold)
+        datasheet.write_column('N3', dataAvg['E_wt'])
+        datasheet.write('O2', 'Total Power', bold)
+        datasheet.write_column('O3', dataAvg['P_tot'])
+        datasheet.write('P2', 'Total Energy', bold)
+        datasheet.write_column('P3', dataAvg['E_tot'])
+        if self.demand:
+            datasheet.write('Q2', 'Demand', bold)
+            datasheet.write_column('Q3', dataAvg['P_dem'])
+            datasheet.write('R2', 'Demand', bold)
+            datasheet.write_column('R3', dataAvg['E_dem'])
+
+        # Create worksheets holding different charts
+        chartsheet_1 = data_file.add_worksheet('Power graphs 1')
+        chartsheet_2 = data_file.add_worksheet('Power graphs 2')
+        chartsheet_3 = data_file.add_worksheet('Energy graphs 1')
+        chartsheet_4 = data_file.add_worksheet('Energy graphs 2')
+
+        # Create charts 
+        p_totchart = data_file.add_chart({'type':'line'})
+        p_solarchart = data_file.add_chart({'type':'line'})
+        p_windchart = data_file.add_chart({'type':'line'})
+        p_allchart = data_file.add_chart({'type':'line'})
+
+        # Add the data to corresponding chart
+        p_totchart.add_series({'name': 'combined power', 'values': 'Output!$F$3:$F$8762', 'line' :{'color': '#23BF00', 'width': 2,'transparency': 50}})
+        p_solarchart.add_series({'name': 'solar power', 'values': 'Output!$B$3:$B$8762', 'line' :{'color': '#FF9900', 'width': 2,'transparency': 50}})
+        p_windchart.add_series({'name': 'wind power', 'values': 'Output!$D$3:$D$8762', 'line' :{'color': '#4287F5', 'width': 2,'transparency': 50}})
+        p_allchart.add_series({'name': 'solar power', 'values': 'Output!$B$3:$B$8762', 'line' :{'color': '#FF9900', 'width': 2,'transparency': 50}})
+        p_allchart.add_series({'name': 'wind power', 'values': 'Output!$D$3:$D$8762', 'line' :{'color': '#4287F5', 'width': 2,'transparency': 50}})
+        p_allchart.add_series({'name': 'total power', 'values': 'Output!$F$3:$F$8762', 'line' :{'color': '#23BF00', 'width': 2,'transparency': 50}})
+
+        # If there's a demand variable add it
+        if self.demand:
+            p_totchart.add_series({'name': 'demand', 'values': 'Output!$H$3:$H$8762', 'line' :{'color': 'red', 'width': 2,'transparency': 50}})
+            p_solarchart.add_series({'name': 'demand', 'values': 'Output!$H$3:$H$8762', 'line' :{'color': 'red', 'width': 2,'transparency': 50}})
+            p_windchart.add_series({'name': 'demand', 'values': 'Output!$H$3:$H$8762', 'line' :{'color': 'red', 'width': 2,'transparency': 50}})
+            p_allchart.add_series({'name': 'demand', 'values': 'Output!$H$3:$H$8762', 'line' :{'color': 'red', 'width': 2,'transparency': 50}})
+
+        # Set chart properties
+        p_totchart.set_x_axis({'name': 'Hours', 'interval_unit': '100'})
+        p_totchart.set_y_axis({'name': 'Power in kW', 'interval_unit': '1000'})
+        p_totchart.set_title({'name': 'Combined solar & wind power'})
+        p_solarchart.set_x_axis({'name': 'Hours', 'interval_unit': '100'})
+        p_solarchart.set_y_axis({'name': 'Power in kW', 'interval_unit': '1000'})
+        p_solarchart.set_title({'name':'Solar power'})
+        p_windchart.set_x_axis({'name': 'Hours', 'interval_unit': '100'})
+        p_windchart.set_y_axis({'name': 'Power in kW', 'interval_unit': '1000'})
+        p_windchart.set_title({'name': 'Wind power'})
+        p_allchart.set_x_axis({'name': 'Hours', 'interval_unit': '100'})
+        p_allchart.set_y_axis({'name': 'Power in kW', 'interval_unit': '1000'})
+        p_allchart.set_title({'name': 'Split power'})    
         
+        # Insert the charts into the sheet
+        chartsheet_1.insert_chart('B2', p_totchart, {'x_scale': 20, 'y_scale': 2})
+        chartsheet_1.insert_chart('B38', p_solarchart, {'x_scale': 20, 'y_scale': 2})
+        chartsheet_1.insert_chart('B74', p_windchart, {'x_scale':20, 'y_scale': 2})
+        chartsheet_1.insert_chart('B110', p_allchart, {'x_scale': 20, 'y_scale': 2})
+
+        # Create charts
+        p_tot_avgchart = data_file.add_chart({'type':'line'})
+        p_sol_avgchart = data_file.add_chart({'type':'line'})
+        p_wind_avgchart = data_file.add_chart({'type':'line'})
+        p_all_avgchart = data_file.add_chart({'type':'line'})
+
+        # Add the values to corresponding charts
+        p_tot_avgchart.add_series({'name':'combined power', 'values':'Output!$O$3:$O$367', 'line':{'color':'#23BF00', 'width': 2, 'transparency': 50}})
+        p_sol_avgchart.add_series({'name':'solar power', 'values':'Output!$K$3:$K$367', 'line':{'color':'#FF9900','width':2,'transparency':50}})
+        p_wind_avgchart.add_series({'name':'wind power', 'values':'Output!$M$3:$M$367', 'line':{'color':'#4287F5','width':2,'transparency':50}})
+        p_all_avgchart.add_series({'name':'solar power', 'values':'Output!$K$3:$K$367', 'line':{'color':'#FF9900','width':2,'transparency':50}})
+        p_all_avgchart.add_series({'name':'wind power', 'values':'Output!$M$3:$M$367', 'line':{'color':'##4287F5', 'width': 2, 'transparency': 50}})
+        p_all_avgchart.add_series({'name':'combined power', 'values':'Output!$O$3:$O$367', 'line':{'color':'#23BF00', 'width': 2, 'transparency': 50}})        
+
+        # If there's a demand variabeble, ad it to the charts
+        if self.demand:
+            p_sol_avgchart.add_series({'name':'demand', 'values':'Output!$Q$3:$Q$367', 'line': {'color':'red', 'width':2}})
+            p_tot_avgchart.add_series({'name':'demand', 'values':'Output!$Q$3:$Q$367', 'line':{'color':'red', 'width': 2}})
+            p_wind_avgchart.add_series({'name':'demand', 'values':'Output!$Q$3:$Q$367', 'line': {'color':'red', 'width':2}})
+            p_all_avgchart.add_series({'name':'demand', 'values':'Output!$Q$3:$Q$367', 'line': {'color':'red', 'width':2}})
+        # Set the chart axis and title properties
+        p_tot_avgchart.set_x_axis({'name': 'Days','interval_unit': '10'})
+        p_tot_avgchart.set_y_axis({'name': 'Power','interval_unit': '1000'})
+        p_tot_avgchart.set_title({'name':'Combined solar & wind power'})
+        p_sol_avgchart.set_x_axis({'name':'Days', 'interva;_unit': '10'})
+        p_sol_avgchart.set_y_axis({'name':'Power', 'interval_unit': '1000'})
+        p_sol_avgchart.set_title({'name':'Solar power'})
+        p_wind_avgchart.set_x_axis({'name':'Days', 'interva;_unit': '10'})
+        p_wind_avgchart.set_y_axis({'name':'Power', 'interval_unit': '1000'})
+        p_wind_avgchart.set_title({'name':'Wind power'})
+        p_all_avgchart.set_x_axis({'name':'Days', 'interva;_unit': '10'})
+        p_all_avgchart.set_y_axis({'name':'Power', 'interval_unit': '1000'})
+        p_all_avgchart.set_title({'name':'Split power'})
+        
+        # Insert the charts into the sheet
+        chartsheet_2.insert_chart('B2', p_tot_avgchart,{'x_scale': 4, 'y_scale':2})
+        chartsheet_2.insert_chart('B38', p_sol_avgchart,{'x_scale':4, 'y_scale':2})
+        chartsheet_2.insert_chart('B74', p_wind_avgchart,{'x_scale':4, 'y_scale':2})
+        chartsheet_2.insert_chart('B110', p_all_avgchart,{'x_scale':4, 'y_scale':2})
+
+        """Do the same for energy data"""
+
+        e_totchart = data_file.add_chart({'type':'line'})
+        e_solarchart = data_file.add_chart({'type':'line'})
+        e_windchart = data_file.add_chart({'type':'line'})
+        e_allchart = data_file.add_chart({'type':'line'})
+        
+
+        # Add the data to corresponding chart
+        e_totchart.add_series({'name': 'combined energy', 'values': 'Output!$G$3:$G$8762', 'line' :{'color': '#23BF00', 'width': 2,'transparency': 50}})
+        e_solarchart.add_series({'name': 'solar energy', 'values': 'Output!$C$3:$C$8762', 'line' :{'color': '#FF9900', 'width': 2,'transparency': 50}})
+        e_windchart.add_series({'name': 'wind energy', 'values': 'Output!$E$3:$E$8762', 'line' :{'color': '#4287F5', 'width': 2,'transparency': 50}})
+        e_allchart.add_series({'name': 'solar energy', 'values': 'Output!$C$3:$C$8762', 'line' :{'color': '#FF9900', 'width': 2,'transparency': 50}})
+        e_allchart.add_series({'name': 'wind energy', 'values': 'Output!$E$3:$E$8762', 'line' :{'color': '#4287F5', 'width': 2,'transparency': 50}})
+        e_allchart.add_series({'name': 'combined energy', 'values': 'Output!$G$3:$G$8762', 'line' :{'color': '#23BF00', 'width': 2,'transparency': 50}})
+
+        # If there's a demand variable add it
+        if self.demand:
+            e_totchart.add_series({'name': 'demand', 'values': 'Output!$I$3:$I$8762', 'line' :{'color': 'red', 'width': 2,'transparency': 50}})
+            e_solarchart.add_series({'name': 'demand', 'values': 'Output!$I$3:$I$8762', 'line' :{'color': 'red', 'width': 2,'transparency': 50}})
+            e_windchart.add_series({'name': 'demand', 'values': 'Output!$I$3:$I$8762', 'line' :{'color': 'red', 'width': 2,'transparency': 50}})
+            e_allchart.add_series({'name': 'demand', 'values': 'Output!$I$3:$I$8762', 'line' :{'color': 'red', 'width': 2,'transparency': 50}})
+
+        # Set chart properties
+        e_totchart.set_x_axis({'name': 'Hours', 'interval_unit': '100'})
+        e_totchart.set_y_axis({'name': 'energy in kWh', 'interval_unit': '1000'})
+        e_totchart.set_title({'name': 'Combined solar & wind energy'})
+        e_solarchart.set_x_axis({'name': 'Hours', 'interval_unit': '100'})
+        e_solarchart.set_y_axis({'name': 'energy in kWh', 'interval_unit': '1000'})
+        e_solarchart.set_title({'name':'Solar energy'})
+        e_windchart.set_x_axis({'name': 'Hours', 'interval_unit': '100'})
+        e_windchart.set_y_axis({'name': 'energy in kWh', 'interval_unit': '1000'})
+        e_windchart.set_title({'name': 'Wind energy'})
+        e_allchart.set_x_axis({'name': 'Hours', 'interval_unit': '100'})
+        e_allchart.set_y_axis({'name': 'energy in kWh', 'interval_unit': '1000'})
+        e_allchart.set_title({'name': 'Split energy'})    
+        
+        # Insert the charts into the sheet
+        chartsheet_3.insert_chart('B2', e_totchart, {'x_scale': 8, 'y_scale': 2})
+        chartsheet_3.insert_chart('B38', e_solarchart, {'x_scale': 8, 'y_scale': 2})
+        chartsheet_3.insert_chart('B74', e_windchart, {'x_scale':8, 'y_scale': 2})
+        chartsheet_3.insert_chart('B110', e_allchart, {'x_scale': 8, 'y_scale': 2})
+
+        # Create charts
+        e_tot_avgchart = data_file.add_chart({'type':'line'})
+        e_sol_avgchart = data_file.add_chart({'type':'line'})
+        e_wind_avgchart = data_file.add_chart({'type':'line'})
+        e_all_avgchart = data_file.add_chart({'type':'line'})
+
+        # Add the values to corresponding charts
+        e_tot_avgchart.add_series({'name':'combined energy', 'values':'Output!$P$3:$P$367', 'line':{'color':'#23BF00', 'width': 2, 'transparency': 50}})
+        e_sol_avgchart.add_series({'name':'solar energy', 'values':'Output!$L$3:$L$367', 'line':{'color':'#FF9900','width':2,'transparency':50}})
+        e_wind_avgchart.add_series({'name':'wind energy', 'values':'Output!$N$3:$N$367', 'line':{'color':'#4287F5','width':2,'transparency':50}})
+        e_all_avgchart.add_series({'name':'solar energy', 'values':'Output!$L$3:$L$367', 'line':{'color':'#FF9900','width':2,'transparency':50}})
+        e_all_avgchart.add_series({'name':'wind energy', 'values':'Output!$N$3:$N$367', 'line':{'color':'##4287F5', 'width': 2, 'transparency': 50}})
+        e_all_avgchart.add_series({'name':'combined energy', 'values':'Output!$P$3:$P$367', 'line':{'color':'#23BF00', 'width': 2, 'transparency': 50}})        
+
+        # If there's a demand variabeble, ad it to the charts
+        if self.demand:
+            e_sol_avgchart.add_series({'name':'demand', 'values':'Output!$R$3:$R$367', 'line': {'color':'red', 'width':2}})
+            e_tot_avgchart.add_series({'name':'demand', 'values':'Output!$R$3:$R$367', 'line':{'color':'red', 'width': 2}})
+            e_wind_avgchart.add_series({'name':'demand', 'values':'Output!$R$3:$R$367', 'line': {'color':'red', 'width':2}})
+            e_all_avgchart.add_series({'name':'demand', 'values':'Output!$R$3:$R$367', 'line': {'color':'red', 'width':2}})
+        # Set the chart axis and title properties
+        e_tot_avgchart.set_x_axis({'name': 'Days','interval_unit': '10'})
+        e_tot_avgchart.set_y_axis({'name': 'energy in kWh','interval_unit': '1000'})
+        e_tot_avgchart.set_title({'name':'Combined solar & wind energy'})
+        e_sol_avgchart.set_x_axis({'name':'Days', 'interva;_unit': '10'})
+        e_sol_avgchart.set_y_axis({'name':'energy in kWh', 'interval_unit': '1000'})
+        e_sol_avgchart.set_title({'name':'Solar energy'})
+        e_wind_avgchart.set_x_axis({'name':'Days', 'interva;_unit': '10'})
+        e_wind_avgchart.set_y_axis({'name':'energy in kWh', 'interval_unit': '1000'})
+        e_wind_avgchart.set_title({'name':'Wind energy'})
+        e_all_avgchart.set_x_axis({'name':'Days', 'interva;_unit': '10'})
+        e_all_avgchart.set_y_axis({'name':'energy in kWh', 'interval_unit': '1000'})
+        e_all_avgchart.set_title({'name':'Split energy'})
+        
+        # Insert the charts into the sheet
+        chartsheet_4.insert_chart('B2', e_tot_avgchart,{'x_scale': 4, 'y_scale':2})
+        chartsheet_4.insert_chart('B38', e_sol_avgchart,{'x_scale':4, 'y_scale':2})
+        chartsheet_4.insert_chart('B74', e_wind_avgchart,{'x_scale':4, 'y_scale':2})
+        chartsheet_4.insert_chart('B110', e_all_avgchart,{'x_scale':4, 'y_scale':2})
+
+        # Close file properly
         data_file.close()
 
 class SimTab(wx.Panel):
@@ -606,7 +857,7 @@ class SimTab(wx.Panel):
                   'windfeatures':windfeatures,'solarfeatures':solarfeatures,'sp_eff':self.sp_eff,
                   'wt_type':self.wt_type_choice.GetString(self.wt_type_choice.GetCurrentSelection()), 
                   'sp_price': self.sp_price, 'wt_price': self.wt_price, 'st_price':self.st_price,
-                  'surp_price': 0, 'short_price': 0}
+                  'surp_price': 0, 'short_price': 0, 'demand' : 0}
 
         with wx.FileDialog(self, "Save simulation", defaultFile='Simulation_output', wildcard='Excel files(*.xlsx)|*.*',
                            style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT) as fileDialog:
@@ -1354,10 +1605,10 @@ class TrainTab(wx.Panel):
         self.surplus_field.SetValue(f'{int(self.power_surplus)}')
         self.shortage_field.SetValue(f'{int(self.power_shortage)}')
 
-        self.sol_cost_field.SetValue(f'{self.sol_cost:,}')
-        self.win_cost_field.SetValue(f'{self.win_cost:,}')
-        self.stor_cost_field.SetValue(f'{self.stor_cost:,}')
-        self.tot_cost_field.SetValue(f'{self.tot_cost:,}')
+        self.sol_cost_field.SetValue(f'{(self.sol_cost/1000):,}')
+        self.win_cost_field.SetValue(f'{(self.win_cost/1000):,}')
+        self.stor_cost_field.SetValue(f'{(self.stor_cost/1000):,}')
+        self.tot_cost_field.SetValue(f'{(self.tot_cost/1000):,}')
 
     # Open the input dialog when the input button is clicked
     def on_inputbutton_clicked(self, event):
@@ -1540,7 +1791,8 @@ class TrainTab(wx.Panel):
                   'windfeatures':windfeatures,'solarfeatures':solarfeatures,'sp_eff':self.dialog.sp_eff,
                   'sp_price': self.dialog.sp_price, 'wt_price':self.dialog.wt_price, 'st_price': self.dialog.st_price,
                   'wt_type':self.dialog.wt_type_choice.GetString(self.dialog.wt_type_choice.GetSelection()),
-                  'short_price':self.dialog.shortage_price , 'surp_price':self.dialog.surplus_price}
+                  'short_price':self.dialog.shortage_price , 'surp_price':self.dialog.surplus_price,
+                  'demand':self.dialog.demand}
 
         with wx.FileDialog(self, "Save trianing", defaultFile='Training_output', wildcard='Excel files(*.xlsx)|*.*',
                            style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT) as fileDialog:
@@ -1549,7 +1801,6 @@ class TrainTab(wx.Panel):
                 return
 
             path = fileDialog.GetPath()
-            print(path)
             self.save_button.Disable()
             writer = FileWriter(self, path, **params)
             writer.start()
