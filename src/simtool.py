@@ -694,8 +694,8 @@ class SimTab(wx.Panel):
             simulator = Simulator(self.location_obj, self.year_choice.GetString(self.year_choice.GetCurrentSelection()), 
                               turbine, latitude=self.latitude, longitude=self.longitude)
             self.cost_calculator = CostCalculator(self.sp_price, self.st_price, self.demand_input, 0, self.wt_price, 0, True, windturbine=turbine)
-        except Error:
-            wx.MessageBox('Error during simulation', f'{Error}', wx.OK)
+        except:
+            wx.MessageBox('Please make sure you enter\na location, a year and a windturbine type', 'Input error', wx.OK)
 
         self.solar_power, self.solar_energy = simulator.calc_solar(Az=[self.sp_or_1, self.sp_or_2, self.sp_or_3, self.sp_or_4], 
                                                                    Inc=[self.sp_ang_1, self.sp_ang_2, self.sp_ang_3, self.sp_ang_4], 
@@ -1651,6 +1651,7 @@ class TrainTab(wx.Panel):
             self.train_worker = TrainWorker(self, parameters)
             self.train_worker.start()
         except:
+            wx.MessageBox('Please make sure you enter all inputs.\nIf problem persists contact developer.', 'Train error', wx.OK)
             self.start_button.Enable()
 
     # When stop is clicked stop the train worker and enable the start button
