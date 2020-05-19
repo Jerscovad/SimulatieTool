@@ -689,9 +689,14 @@ class SimTab(wx.Panel):
 
     # Simulate when button is clicked
     def on_simulate_clicked(self, event):
-        turbine = Windturbine(self.wt_type_choice.GetString(self.wt_type_choice.GetCurrentSelection()))
-        simulator = Simulator(self.location_obj, self.year_choice.GetString(self.year_choice.GetCurrentSelection()), 
+        try:
+            turbine = Windturbine(self.wt_type_choice.GetString(self.wt_type_choice.GetCurrentSelection()))
+            simulator = Simulator(self.location_obj, self.year_choice.GetString(self.year_choice.GetCurrentSelection()), 
                               turbine, latitude=self.latitude, longitude=self.longitude)
+            self.cost_calculator = CostCalculator(self.sp_price, self.st_price, self.demand_input, 0, self.wt_price, 0, True, windturbine=turbine)
+        except Error:
+            wx.MessageBox('Error during simulation', f'{Error}', wx.OK)
+
         self.solar_power, self.solar_energy = simulator.calc_solar(Az=[self.sp_or_1, self.sp_or_2, self.sp_or_3, self.sp_or_4], 
                                                                    Inc=[self.sp_ang_1, self.sp_ang_2, self.sp_ang_3, self.sp_ang_4], 
                                                                    sp_area=[self.sp_area_1, self.sp_area_2, self.sp_area_3, self.sp_area_4], sp_eff=self.sp_eff)
@@ -702,7 +707,7 @@ class SimTab(wx.Panel):
         self.demand_input = 6000
         self.demand = np.full(len(self.total_power), self.demand_input)
 
-        self.cost_calculator = CostCalculator(self.sp_price, self.st_price, self.demand_input, 0, self.wt_price, 0, True, windturbine=turbine)
+        
         stats = self.cost_calculator.get_stats(self.total_power, np.sum([self.sp_area_1, self.sp_area_2, self.sp_area_3, self.sp_area_4]), self.n_wt)
 
 
@@ -874,7 +879,7 @@ class SimTab(wx.Panel):
     def on_savedone(self, evt):
         filename = evt.GetName()
 
-        file_info = 'Simulation stored in {}'.format(filename)
+        file_info = f'Simulation stored in {filename}'
         wx.MessageBox(file_info, 'Saving done', wx.OK)
         self.save_button.Enable()
 
@@ -1504,13 +1509,13 @@ class TrainTab(wx.Panel):
         shortage_txt = wx.StaticText(self, wx.ID_ANY, 'Power shortage (kWh) ')
         self.shortage_field = wx.TextCtrl(self, wx.ID_ANY|wx.TE_READONLY, value=f'{self.power_shortage}')
 
-        sol_cost_txt = wx.StaticText(self, wx.ID_ANY, 'Solar cost (€) ')
+        sol_cost_txt = wx.StaticText(self, wx.ID_ANY, 'Solar cost (k€) ')
         self.sol_cost_field = wx.TextCtrl(self, wx.ID_ANY|wx.TE_READONLY, value=f'{self.sol_cost}')
-        win_cost_txt = wx.StaticText(self, wx.ID_ANY, 'Wind cost (€) ')
+        win_cost_txt = wx.StaticText(self, wx.ID_ANY, 'Wind cost (k€) ')
         self.win_cost_field = wx.TextCtrl(self, wx.ID_ANY|wx.TE_READONLY, value=f'{self.win_cost}')
-        stor_cost_txt = wx.StaticText(self, wx.ID_ANY, 'Storage cost (€) ')
+        stor_cost_txt = wx.StaticText(self, wx.ID_ANY, 'Storage cost (k€) ')
         self.stor_cost_field = wx.TextCtrl(self, wx.ID_ANY|wx.TE_READONLY, value=f'{self.stor_cost}')
-        tot_cost_txt = wx.StaticText(self, wx.ID_ANY, 'Total cost (€) ')
+        tot_cost_txt = wx.StaticText(self, wx.ID_ANY, 'Total cost (k€) ')
         self.tot_cost_field = wx.TextCtrl(self, wx.ID_ANY|wx.TE_READONLY, value =f'{self.tot_cost}')
 
         # Plot setup
@@ -1601,14 +1606,14 @@ class TrainTab(wx.Panel):
         self.wtn_field.SetValue(f'{self.n_wt}')
         self.wth_field.SetValue(f'{self.wt_height}')
 
-        self.storage_field.SetValue(f'{int(self.power_storage)}')
-        self.surplus_field.SetValue(f'{int(self.power_surplus)}')
-        self.shortage_field.SetValue(f'{int(self.power_shortage)}')
+        self.storage_field.SetValue(f'{int(self.power_storage):,}')
+        self.surplus_field.SetValue(f'{int(self.power_surplus):,}')
+        self.shortage_field.SetValue(f'{int(self.power_shortage):,}')
 
-        self.sol_cost_field.SetValue(f'{(self.sol_cost/1000):,}')
-        self.win_cost_field.SetValue(f'{(self.win_cost/1000):,}')
-        self.stor_cost_field.SetValue(f'{(self.stor_cost/1000):,}')
-        self.tot_cost_field.SetValue(f'{(self.tot_cost/1000):,}')
+        self.sol_cost_field.SetValue(f'{(int(self.sol_cost/1000)):,}')
+        self.win_cost_field.SetValue(f'{(int(self.win_cost/1000)):,}')
+        self.stor_cost_field.SetValue(f'{(int(self.stor_cost/1000)):,}')
+        self.tot_cost_field.SetValue(f'{(int(self.tot_cost/1000)):,}')
 
     # Open the input dialog when the input button is clicked
     def on_inputbutton_clicked(self, event):
