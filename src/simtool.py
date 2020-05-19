@@ -1209,7 +1209,6 @@ class InputDialog(wx.Dialog):
             self.price_grid.Hide(self.wt_price_txt)
             self.price_grid.Hide(self.wt_price_field)
             
-        self.price_grid.Layout()
         self.Layout()
 
     def update_loc_settings(self):
