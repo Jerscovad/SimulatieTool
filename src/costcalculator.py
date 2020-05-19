@@ -17,7 +17,7 @@ class CostCalculator():
     """
 
     def __init__(self, sp_cost_per_sm, st_cost_per_kwh, target_kw, shortage_cost, wt_cost_per_kw, 
-                 surplus_cost_per_kw, train_by_price=True, windturbine=Windturbine('5')):
+                 surplus_cost_per_kw, train_by_price=True, windturbine=None):
         self.sp_cost_per_sm = sp_cost_per_sm
         self.st_cost_per_kwh = st_cost_per_kwh
         self.target_kw = target_kw
