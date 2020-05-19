@@ -68,11 +68,6 @@ class Trainer():
 
         for generation in range(self.generations):
 
-            if generation == self.generations - 20:
-                self.genetic_algorithm.set_mutation(self.mutation_percentage / 2)
-            elif generation == self.generations - 10:
-                self.genetic_algorithm.set_mutation(self.mutation_percentage / 4)
-
             cost_array = np.zeros(self.group_size)
 
             for i in range(self.group_size):
