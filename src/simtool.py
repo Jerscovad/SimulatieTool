@@ -336,7 +336,7 @@ class FileWriter(threading.Thread):
         p_sol_avgchart.add_series({'name':'solar power', 'values':'Output!$K$3:$K$367', 'line':{'color':'#FF9900','width':2,'transparency':50}})
         p_wind_avgchart.add_series({'name':'wind power', 'values':'Output!$M$3:$M$367', 'line':{'color':'#4287F5','width':2,'transparency':50}})
         p_all_avgchart.add_series({'name':'solar power', 'values':'Output!$K$3:$K$367', 'line':{'color':'#FF9900','width':2,'transparency':50}})
-        p_all_avgchart.add_series({'name':'wind power', 'values':'Output!$M$3:$M$367', 'line':{'color':'##4287F5', 'width': 2, 'transparency': 50}})
+        p_all_avgchart.add_series({'name':'wind power', 'values':'Output!$M$3:$M$367', 'line':{'color':'#4287F5', 'width': 2, 'transparency': 50}})
         p_all_avgchart.add_series({'name':'combined power', 'values':'Output!$O$3:$O$367', 'line':{'color':'#23BF00', 'width': 2, 'transparency': 50}})        
 
         # If there's a demand variabeble, ad it to the charts
@@ -419,7 +419,7 @@ class FileWriter(threading.Thread):
         e_sol_avgchart.add_series({'name':'solar energy', 'values':'Output!$L$3:$L$367', 'line':{'color':'#FF9900','width':2,'transparency':50}})
         e_wind_avgchart.add_series({'name':'wind energy', 'values':'Output!$N$3:$N$367', 'line':{'color':'#4287F5','width':2,'transparency':50}})
         e_all_avgchart.add_series({'name':'solar energy', 'values':'Output!$L$3:$L$367', 'line':{'color':'#FF9900','width':2,'transparency':50}})
-        e_all_avgchart.add_series({'name':'wind energy', 'values':'Output!$N$3:$N$367', 'line':{'color':'##4287F5', 'width': 2, 'transparency': 50}})
+        e_all_avgchart.add_series({'name':'wind energy', 'values':'Output!$N$3:$N$367', 'line':{'color':'#4287F5', 'width': 2, 'transparency': 50}})
         e_all_avgchart.add_series({'name':'combined energy', 'values':'Output!$P$3:$P$367', 'line':{'color':'#23BF00', 'width': 2, 'transparency': 50}})        
 
         # If there's a demand variabeble, ad it to the charts
