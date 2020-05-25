@@ -6,7 +6,6 @@ from copy import copy
 from simulator import Simulator
 from location import Location
 from windturbine import Windturbine
-import matplotlib.pyplot as plt
 
 class CostCalculator():
     """
@@ -72,7 +71,7 @@ class CostCalculator():
         cumulative_array = np.cumsum(surplus_array)
         total_surplus = max(0,cumulative_array[-1])        
         storage = 0
-        shortage = min(0, total_surplus) * -1
+        shortage = min(0, cumulative_array[-1]) * -1
         if shortage == 0:
             smaller_than_zero = np.where(cumulative_array < 0)[0]
             if smaller_than_zero.shape[0] > 0:
