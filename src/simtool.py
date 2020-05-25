@@ -1150,7 +1150,7 @@ class InputDialog(wx.Dialog):
     def on_mouse_over(self, event):
         #TODO: add tooltips for every field
         event_object = event.GetEventObject()
-        event_object.SetToolTipString(field_info(event_object.GetName()))
+        event_object.SetToolTip(field_info(event_object.GetName()))
 
     def on_location_picked(self, event):
         """
