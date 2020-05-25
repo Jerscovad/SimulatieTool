@@ -3,12 +3,7 @@ import pandas as pd
 from datetime import datetime
 from windturbine import Windturbine
 from location import Location
-import time
 import os
-
-# #remove warning filter after devide by zero is solved!
-# import warnings
-# warnings.filterwarnings("ignore")
 
 KAPPA = 1.041  # for calculations in radians
 IO = 1366.1  # solar constant(w/m^2)
@@ -88,9 +83,9 @@ class Simulator():
         # determination of bin with eps
         s_bin = np.ones(len(self.time))  # bin 1 is overcast sky , bin 8 is clear sky
 
+        # eps calculation had devide by zero which created runtime warnings. Code below is solution for 
         # eps = ((DHI + self.dni) / DHI + KAPPA * Zen ** 3) / (1 + KAPPA * Zen ** 3)
-
-
+        
         eps_numerator = np.divide((DHI + self.dni), DHI, out=np.zeros_like(DHI), where=DHI!=0) + KAPPA * Zen ** 3
         eps_nominator = 1 + KAPPA * Zen ** 3
         eps = np.divide(eps_numerator, eps_nominator, out=np.zeros_like(eps_nominator), where=eps_numerator!=0)
@@ -103,14 +98,6 @@ class Simulator():
         s_bin[np.logical_and(eps >= 4.5, eps < 6.2)] = 7
         s_bin[(eps >= 6.2)] = 8
 
-        # a = pd.DataFrame()
-        # a['eps'] = eps
-        # a['eps2'] = eps2
-        # a['DHI'] = DHI
-        # a['dni'] =self.dni
-        # a['Zen'] = Zen
-
-        # a.to_excel('data.xlsx')
         # calculation of relative air mass
         M = 1 / hai
         M[sel < 2] = 20
