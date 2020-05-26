@@ -1637,15 +1637,20 @@ class TrainTab(wx.Panel):
                                                        self.dialog.trainby,turbine)
 
         parameters = {'generations':self.dialog.generations, 'group_size':self.dialog.poolsize, 
-                      'n_configs':({0:4, 1:3, 2:2, 3:1}.get(self.dialog.n_sp_configs)), 
-                      'surface_min':self.dialog.sp_area_min, 'surface_max':self.dialog.sp_area_max, 
-                      'angle_min':self.dialog.sp_ang_min, 'angle_max':self.dialog.sp_ang_max, 
-                      'orientation_min':self.dialog.sp_or_min, 'orientation_max':self.dialog.sp_or_max, 
-                      'mutation_percentage':self.dialog.m_rate, 'turbines_min':self.dialog.wtn_min, 
-                      'turbines_max':self.dialog.wtn_max, 'turbine_height':self.dialog.turbine_height, 
-                      'cost_calculator':self.costcalculator, 
-                      'simulator':self.simulator, 
-                      'sp_eff':16}
+                  'n_configs':({0:4, 1:3, 2:2, 3:1}.get(self.dialog.n_sp_configs)), 
+                  'surface_min':self.dialog.sp_area_min, 'surface_max':self.dialog.sp_area_max, 
+                  'angle_min':self.dialog.sp_ang_min, 'angle_max':self.dialog.sp_ang_max, 
+                  'orientation_min':self.dialog.sp_or_min, 'orientation_max':self.dialog.sp_or_max, 
+                  'sp_eff':self.dialog.sp_eff, 'mutation_percentage':self.dialog.m_rate, 
+                  'turbines_min':self.dialog.wtn_min, 'turbines_max':self.dialog.wtn_max, 
+                  'turbine_height':self.dialog.turbine_height, 'turbine_type':self.dialog.wt_type_choice.GetString(self.dialog.wt_type_choice.GetSelection()), 
+                  'solar_price':self.dialog.sp_price, 'storage_price':self.dialog.st_price, 'demand':self.dialog.demand, 
+                  'shortage_price':self.dialog.shortage_price, 'turbine_price':self.dialog.wt_price, 
+                  'surplus_price':self.dialog.surplus_price, 'train_by_price':self.dialog.trainby,
+                  'location':self.dialog.location, 'year':self.dialog.year_choice.GetString(self.dialog.year_choice.GetSelection()), 
+                  'latitude':self.dialog.latitude, 'longitude':self.dialog.longitude, 'terrain_factor':self.dialog.terrain_factor
+        }
+
         try:
             self.train_worker = TrainWorker(self, parameters)
             self.train_worker.start()

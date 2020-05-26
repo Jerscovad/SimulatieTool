@@ -1,4 +1,3 @@
-
 import numpy as np
 import wx
 import pandas as pd
@@ -13,10 +12,12 @@ class Trainer():
     """
     Class for training the Genetic Algorithm.
     """
-    def __init__(self, parent, generations=100, group_size=100, n_configs=4, surface_min=0, 
-                 surface_max=10000000, angle_min=0, angle_max=90, orientation_min=-180, 
-                 orientation_max=180, mutation_percentage=150, turbines_min=0, turbines_max=10, 
-                 turbine_height=100, cost_calculator=None, simulator=None, sp_eff=16):
+    def __init__(self, parent, generations, group_size, n_configs, surface_min, 
+                 surface_max, angle_min, angle_max, orientation_min, 
+                 orientation_max, sp_eff, mutation_percentage, turbines_min, turbines_max, 
+                 turbine_height, turbine_type, solar_price, storage_price, demand, 
+                 shortage_price, turbine_price, surplus_price, train_by_price,
+                 location, year, latitude, longitude, terrain_factor) :
         self.parent = parent
         self.generations = generations
         self.group_size = group_size
@@ -31,8 +32,12 @@ class Trainer():
         self.turbines_max = turbines_max
         self.turbine_height = turbine_height
         self.sp_eff = sp_eff
-        self.simulator = simulator
-        self.cost_calculator = cost_calculator
+        self.turbine_type = turbine_type
+        self.simulator = Simulator(Location(location), year, Windturbine(self.turbine_type), latitude=latitude, longitude=longitude, terrain_factor=terrain_factor)
+        self.cost_calculator = CostCalculator(solar_price, storage_price, demand, 
+                                              shortage_price, turbine_price, 
+                                              surplus_price, train_by_price=train_by_price, 
+                                              windturbine=Windturbine(self.turbine_type))
         self.genetic_algorithm = GeneticAlgorithm(mutation_percentage, 150, 6, 2, 2, True )
         self.stopped = False
 
@@ -109,12 +114,44 @@ class Trainer():
             group_values = np.minimum(group_values, highest_allowed)
             group_values = np.maximum(group_values, lowest_allowed)
 
-
 if __name__ == '__main__':
-    print('hi')
-    params = {'generations':200, 'group_size':300,'n_configs':3,'surface_min':1,'surface_max':1000,'angle_min':10,'angle_max':40,'orientation_min':-90, 'orientation_max':90,'mutation_percentage':100, 'turbines_min':1,'turbines_max':7, 'turbine_height':90,'sp_eff':17}
-
-    trainer = Trainer(None, **params, cost_calculator = None, simulator =None)
-
-    print(trainer.sp_eff)
-    print(trainer.surface_min)
+    class parent():
+        def __init__(self):
+            self.stopped=False
+        def traindone(self):
+            pass
+        def gendone(self,data):
+            pass
+    
+    parameters = {
+    'generations':50,
+    'group_size':300,
+    'n_configs':4,
+    'surface_min':0,
+    'surface_max':1000000,
+    'angle_min':0,
+    'angle_max':90,
+    'orientation_min':-90,
+    'orientation_max':90,
+    'sp_eff':16,
+    'mutation_percentage':50,
+    'turbines_min':0,
+    'turbines_max':7,
+    'turbine_height':100,
+    'turbine_type':'3MW',
+    'solar_price':160,
+    'storage_price':400,
+    'demand':6000,
+    'shortage_price':10000000,
+    'turbine_price':1070,
+    'surplus_price':400,
+    'train_by_price':True,
+    'location': 'volkel',
+    'year': '2018',
+    'latitude': None,
+    'longitude': None,
+    'terrain_factor': None
+        }
+    parent = parent()
+    trainer = Trainer(parent, **parameters)
+    result = trainer.train()
