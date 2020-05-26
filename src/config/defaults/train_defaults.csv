@@ -1,2 +1,2 @@
 ,location,year,latitude,longitude,sp_eff,sp_area_min,sp_area_max,sp_ang_min,sp_ang_max,sp_or_min,sp_or_max,n_sp_configs,turbine_height,terrain_factor,turbine_type,wtn_min,wtn_max,demand,generations,poolsize,m_rate,sp_price,wt_price,st_price,shortage_price,surplus_price,n_config_,year_choice,location_choice,n_sp_configs_choice
-0,Volkel,0,51.659,5.707,16,0,1000000,0,90,-90,90,0,100,0.269,0,0,100,6000,100,300,50,160,1070,400,1000000,400,0,0,27,0
+0,Volkel,0,51.659,5.707,16,0,1000000,0,90,-90,90,0,100,0.269,3MW,0,100,6000,100,300,50,160,1070,400,1000000,400,0,2018,Volkel,4

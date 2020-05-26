@@ -91,7 +91,7 @@ class FileWriter(threading.Thread):
 
         threading.Thread.__init__(self, daemon=True)
         self.parent = parent
-        self.path = '{}.xlsx'.format(path)
+        self.path = path
         self.location = location
         self.year_choice = year_choice
         self.terrain_factor = terrain_factor
@@ -459,7 +459,7 @@ class SimTab(wx.Panel):
         wx.Panel.__init__(self, parent)
 
         # Populate the locations list with all available locations
-        self.locations = [i.lower().capitalize() for i in pd.read_csv('Data{}locations.csv'.format(os.sep),index_col=0,header=0).NAME.values]
+        self.locations = [i.lower().capitalize() for i in pd.read_csv(f'Data{os.sep}locations.csv',index_col=0,header=0).NAME.values]
         self.location_obj = None # Object containing all location data
         self.location = None # Just the location name
 
@@ -865,7 +865,7 @@ class SimTab(wx.Panel):
                   'sp_price': self.sp_price, 'wt_price': self.wt_price, 'st_price':self.st_price,
                   'surp_price': 0, 'short_price': 0, 'demand' : 0}
 
-        with wx.FileDialog(self, "Save simulation", defaultFile='Simulation_output', wildcard='Excel files(*.xlsx)|*.*',
+        with wx.FileDialog(self, "Save simulation", defaultFile='Simulation_output', wildcard='excel files(*.xlsx)|*.xlsx',
                            style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT) as fileDialog:
 
             if fileDialog.ShowModal() == wx.ID_CANCEL:
@@ -1295,13 +1295,13 @@ class InputDialog(wx.Dialog):
         """ 
             Load defaults from file and update the fields. 
         """
-        defaults = pd.read_csv('config{sep}defaults{sep}train_defaults.csv'.format(sep=os.sep), header=0)
+        defaults = pd.read_csv(f"config{os.sep}defaults{os.sep}train_defaults.csv", header=0)
 
-        self.places.SetSelection(defaults.location_choice.values[0])
+        self.places.SetSelection(self.places.FindString(defaults.location_choice.values[0]))
         self.on_location_picked(None)
-        self.year_choice.SetSelection(defaults.year_choice.values[0])
-        self.n_sp_configs_list.SetSelection(defaults.n_sp_configs_choice.values[0])
-        self.wt_type_choice.SetSelection(defaults.turbine_type.values[0])
+        self.year_choice.SetSelection(self.year_choice.FindString(f"{defaults.year_choice.values[0]}"))
+        self.n_sp_configs_list.SetSelection(self.n_sp_configs_list.FindString(f"{(defaults.n_sp_configs_choice.values[0])}"))
+        self.wt_type_choice.SetSelection(self.wt_type_choice.FindString(defaults.turbine_type.values[0]))
 
         self.location = defaults.location.values[0]
         self.year = defaults.year.values[0]
@@ -1348,14 +1348,14 @@ class InputDialog(wx.Dialog):
                     'sp_ang_max': self.sp_ang_max, 'sp_or_min': self.sp_or_min, 
                     'sp_or_max': self.sp_or_max, 'n_sp_configs': self.n_sp_configs,
                     'turbine_height': self.turbine_height, 'terrain_factor':self.terrain_factor,
-                    'turbine_type': self.wt_type_choice.GetCurrentSelection(),
+                    'turbine_type': self.wt_type_choice.GetString(self.wt_type_choice.GetCurrentSelection()),
                     'wtn_min': self.wtn_min, 'wtn_max': self.wtn_max,
                     'demand': self.demand, 'generations': self.generations, 
                     'poolsize': self.poolsize, 'm_rate': self.m_rate, 
                     'sp_price': self.sp_price, 'wt_price': self.wt_price, 
                     'st_price': self.st_price, 'shortage_price': self.shortage_price, 'surplus_price': self.surplus_price,
-                    'n_config_':self.n_sp_configs,'year_choice':self.year_choice.GetCurrentSelection(),
-                    'location_choice':self.places.GetCurrentSelection(),'n_sp_configs_choice':self.n_sp_configs_list.GetCurrentSelection()}
+                    'n_config_':self.n_sp_configs,'year_choice':self.year_choice.GetString(self.year_choice.GetCurrentSelection()),
+                    'location_choice':self.places.GetString(self.places.GetCurrentSelection()),'n_sp_configs_choice':self.n_sp_configs_list.GetString(self.n_sp_configs_list.GetCurrentSelection())}
         pd.DataFrame([defaults]).to_csv('config{sep}defaults{sep}train_defaults.csv'.format(sep=os.sep))
 
         file_info = 'Current inputs saved as default.'
@@ -1669,25 +1669,25 @@ class TrainTab(wx.Panel):
     def on_gendone(self, event):
         self.progress.SetValue(event.data[1]+1)
         self.config = event.data[0].astype(int)
-        solar_features = self.config[:12]
-        turbines = self.config[12]
+        solar_features = self.config[:-1]
+        turbines = self.config[-1]
 
         surface_features = solar_features[0::3]
         angle_features = solar_features[1::3]
         orientation_features = solar_features[2::3]
         
         self.sp_area_1 = surface_features[0]
-        self.sp_area_2 = surface_features[1]
-        self.sp_area_3 = surface_features[2]
-        self.sp_area_4 = surface_features[3]
+        self.sp_area_2 = 0 if len(surface_features) < 2 else surface_features[1]
+        self.sp_area_3 = 0 if len(surface_features) < 3 else surface_features[2]
+        self.sp_area_4 = 0 if len(surface_features) < 4 else surface_features[3]
         self.sp_or_1 = orientation_features[0]
-        self.sp_or_2 = orientation_features[1]
-        self.sp_or_3 = orientation_features[2]
-        self.sp_or_4 = orientation_features[3]
+        self.sp_or_2 = 0 if len(orientation_features) < 2 else orientation_features[1]
+        self.sp_or_3 = 0 if len(orientation_features) < 3 else orientation_features[2]
+        self.sp_or_4 = 0 if len(orientation_features) < 4 else orientation_features[3]
         self.sp_ang_1 = angle_features[0]
-        self.sp_ang_2 = angle_features[1]
-        self.sp_ang_3 = angle_features[2]
-        self.sp_ang_4 = angle_features[3]
+        self.sp_ang_2 = 0 if len(angle_features) < 2 else angle_features[1]
+        self.sp_ang_3 = 0 if len(angle_features) < 3 else angle_features[2]
+        self.sp_ang_4 = 0 if len(angle_features) < 4 else angle_features[3]
         self.n_wt = turbines
         self.wt_height = self.dialog.turbine_height
 
@@ -1804,7 +1804,7 @@ class TrainTab(wx.Panel):
                   'short_price':self.dialog.shortage_price , 'surp_price':self.dialog.surplus_price,
                   'demand':self.dialog.demand}
 
-        with wx.FileDialog(self, "Save trianing", defaultFile='Training_output', wildcard='Excel files(*.xlsx)|*.*',
+        with wx.FileDialog(self, "Save trianing", defaultFile='Training_output', wildcard='excel files(*.xlsx)|*.xlsx',
                            style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT) as fileDialog:
 
             if fileDialog.ShowModal() == wx.ID_CANCEL:
