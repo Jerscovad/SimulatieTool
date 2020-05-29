@@ -3,7 +3,6 @@ import wx
 import pandas as pd
 from costcalculator import CostCalculator
 from genetic_algorithm import GeneticAlgorithm
-from multiprocessing import Process, Value
 from windturbine import Windturbine
 from simulator import Simulator
 from location import Location
