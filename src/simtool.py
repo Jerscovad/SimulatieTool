@@ -513,6 +513,7 @@ class SimTab(wx.Panel):
         self.power_storage = 0
 
         self.cost_calculator = None
+        self.simulator = None
     
         # Cost output variables
         self.sol_cost = 0
@@ -692,16 +693,17 @@ class SimTab(wx.Panel):
     def on_simulate_clicked(self, event):
         try:
             turbine = Windturbine(self.wt_type_choice.GetString(self.wt_type_choice.GetCurrentSelection()))
-            simulator = Simulator(self.location_obj, self.year_choice.GetString(self.year_choice.GetCurrentSelection()), 
+            self.simulator = Simulator(self.location_obj, self.year_choice.GetString(self.year_choice.GetCurrentSelection()), 
                               turbine, latitude=self.latitude, longitude=self.longitude)
             self.cost_calculator = CostCalculator(self.sp_price, self.st_price, self.demand_input, 0, self.wt_price, 0, True, windturbine=turbine)
         except:
             wx.MessageBox('Please make sure you enter\na location, a year and a windturbine type', 'Input error', wx.OK)
+            return
 
-        self.solar_power, self.solar_energy = simulator.calc_solar(Az=[self.sp_or_1, self.sp_or_2, self.sp_or_3, self.sp_or_4], 
+        self.solar_power, self.solar_energy = self.simulator.calc_solar(Az=[self.sp_or_1, self.sp_or_2, self.sp_or_3, self.sp_or_4], 
                                                                    Inc=[self.sp_ang_1, self.sp_ang_2, self.sp_ang_3, self.sp_ang_4], 
                                                                    sp_area=[self.sp_area_1, self.sp_area_2, self.sp_area_3, self.sp_area_4], sp_eff=self.sp_eff)
-        self.wind_power, self.wind_energy = simulator.calc_wind([self.n_wt, self.wt_height])
+        self.wind_power, self.wind_energy = self.simulator.calc_wind([self.n_wt, self.wt_height])
         self.total_power = self.wind_power + self.solar_power
         self.total_energy = self.wind_energy + self.solar_energy
 
@@ -1946,7 +1948,6 @@ class MainFrame(wx.Frame):
         self.SetSizer(sizer)
         self.Layout()
         self.Fit()
-        self.Maximize(True)
 
     # Small dialog showing about info when about is selected from dropdown.
     def on_about_request(self, id):
