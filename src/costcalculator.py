@@ -6,6 +6,19 @@ from copy import copy
 from simulator import Simulator
 from location import Location
 from windturbine import Windturbine
+import numba
+from numba import jit
+
+@jit(nopython=True)
+def get_storage(declining, storage, cumulative_array):
+    while np.any(declining) and storage < np.max(cumulative_array):
+            lowest = np.min(cumulative_array[declining])
+            cumulative_array -= lowest
+            new_start = np.where(np.logical_and(np.equal(cumulative_array, 0), declining))[0][-1] + 1
+            storage = max(storage, np.max(cumulative_array[:new_start]))
+            cumulative_array = cumulative_array[new_start:]
+            declining = declining[new_start:]
+    return storage
 
 class CostCalculator():
     """
@@ -14,7 +27,6 @@ class CostCalculator():
         st_cost_per_kwh = Storage Cost per KWH
         
     """
-
     def __init__(self, sp_cost_per_sm, st_cost_per_kwh, target_kw, shortage_cost, wt_cost_per_kw, 
                  surplus_cost_per_kw, train_by_price=True, windturbine=None):
         self.sp_cost_per_sm = sp_cost_per_sm
@@ -41,13 +53,7 @@ class CostCalculator():
                 surplus_array = np.concatenate((surplus_array[new_start:], surplus_array[:new_start]), axis=0)
                 cumulative_array = np.cumsum(surplus_array)
             declining = surplus_array < 0
-            while np.any(declining) and storage < np.max(cumulative_array):
-                lowest = np.min(cumulative_array[declining])
-                cumulative_array -= lowest
-                new_start = np.where(np.logical_and(np.equal(cumulative_array, 0), declining))[0][-1] + 1
-                storage = max(storage, np.max(cumulative_array[:new_start]))
-                cumulative_array = cumulative_array[new_start:]
-                declining = declining[new_start:]
+            storage = get_storage(declining, storage, cumulative_array)
 
         # windturbine calculation
         # Max power * number of turbines * cost per kw
@@ -79,13 +85,7 @@ class CostCalculator():
                 surplus_array = np.concatenate((surplus_array[new_start:], surplus_array[:new_start]), axis=0)
                 cumulative_array = np.cumsum(surplus_array)
             declining = surplus_array < 0
-            while np.any(declining) and storage < np.max(cumulative_array):
-                lowest = np.min(cumulative_array[declining])
-                cumulative_array -= lowest
-                new_start = np.where(np.logical_and(np.equal(cumulative_array, 0), declining))[0][-1] + 1
-                storage = max(storage, np.max(cumulative_array[:new_start]))
-                cumulative_array = cumulative_array[new_start:]
-                declining = declining[new_start:]
+            storage = get_storage(declining, storage, cumulative_array)
 
         wm_cost = self.turbine_power * turbines * self.wt_cost_per_kw
 
