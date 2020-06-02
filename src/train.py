@@ -1,6 +1,4 @@
 import numpy as np
-import wx
-import pandas as pd
 from costcalculator import CostCalculator
 from genetic_algorithm import GeneticAlgorithm
 from windturbine import Windturbine

@@ -1,14 +1,15 @@
-"""calculate the cost of panels, windmills and storage"""
 
 import numpy as np
-import pandas as pd
-from copy import copy
 from simulator import Simulator
 from location import Location
 from windturbine import Windturbine
 import numba
 from numba import jit
 
+"""
+jit is used to optimize functions.
+Storage calculation is a long loop hence jit is applied.
+"""
 @jit(nopython=True)
 def get_storage(declining, storage, cumulative_array):
     while np.any(declining) and storage < np.max(cumulative_array):

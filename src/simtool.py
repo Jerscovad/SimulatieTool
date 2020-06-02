@@ -1,5 +1,4 @@
 import wx
-import sys
 from windturbine import Windturbine
 from simulator import Simulator
 from train import Trainer
@@ -30,6 +29,10 @@ myEVT_GENDONE = wx.NewEventType()
 EVT_GENDONE = wx.PyEventBinder(myEVT_GENDONE, 1)
 
 MAX_PLOTS = 4 #increase or decrease depending on number of graphs
+
+ORANGE = '#FF9900'
+GREEN = '#23BF00'
+BLUE = '#4287F5'
 
 class GenDoneEvent(wx.PyCommandEvent):
     """
@@ -748,39 +751,44 @@ class SimTab(wx.Panel):
 
         # Check which graph is currently chosen and plot it
         if self.plot_iter == 0:
-            self.axes.plot(np.mean(np.reshape(self.total_power[:8760], (365,24)), axis=1), color='green', alpha=0.5, label='Total')
-            self.axes.plot(np.mean(np.reshape(self.demand[:8760], (365,24)), axis=1), color='red', alpha=0.5, label='Demand')
+            self.axes.plot(np.mean(np.reshape(self.total_power[:8760], (365,24)), axis=1),
+                                   color=GREEN, alpha=0.5, label='Total')
+            self.axes.plot(np.mean(np.reshape(self.demand[:8760], (365,24)), axis=1), 
+                                   color='red', alpha=0.5, label='Demand')
             self.axes.set_xlabel('Days')
             self.axes.set_ylabel('kW')
-            self.axes.set_title('Power output for ' + self.location + ' ' + self.year_choice.GetString(self.year_choice.GetSelection()))
+            self.axes.set_title(f'Power output for {self.location} {self.year_choice.GetString(self.year_choice.GetSelection())}')
             self.axes.legend(loc='upper left')
             self.axes.set_frame_on(True)
             self.axes.axis('tight')
         if self.plot_iter == 1:
-            self.axes.plot(np.mean(np.reshape(self.solar_power[:8760], (365,24)), axis=1), color='yellow', alpha=0.5, label='Solar')
-            self.axes.plot(np.mean(np.reshape(self.wind_power[:8760], (365,24)), axis=1), color='blue', alpha=0.5, label='Wind')
-            self.axes.plot(np.mean(np.reshape(self.demand[:8760], (365,24)), axis=1), color='red', alpha=0.5, label='Demand')
+            self.axes.plot(np.mean(np.reshape(self.solar_power[:8760], (365,24)), axis=1), 
+                                   color=ORANGE, alpha=0.5, label='Solar')
+            self.axes.plot(np.mean(np.reshape(self.wind_power[:8760], (365,24)), axis=1), 
+                                   color=BLUE, alpha=0.5, label='Wind')
+            self.axes.plot(np.mean(np.reshape(self.demand[:8760], (365,24)), axis=1), 
+                                   color='red', alpha=0.5, label='Demand')
             self.axes.set_xlabel('Days')
             self.axes.set_ylabel('kW')
-            self.axes.set_title('Split power output for ' + self.location + ' ' + self.year_choice.GetString(self.year_choice.GetSelection()))
+            self.axes.set_title(f'Split power output for {self.location} {self.year_choice.GetString(self.year_choice.GetSelection())}')
             self.axes.legend(loc='upper left')
             self.axes.set_frame_on(True)
             self.axes.axis('tight')
         if self.plot_iter == 2:
             labels = 'Solar', 'Wind', 'Storage'
             sizes =  self.solar_energy[-1], self.wind_energy[-1], self.power_storage
-            self.axes.pie(sizes, labels=labels, autopct='%1.1f%%')
-            self.axes.set_title('Ratio\'s of power sources ' + self.location + ' ' + self.year_choice.GetString(self.year_choice.GetSelection()))
+            self.axes.pie(sizes, labels=labels, autopct='%1.1f%%', colors=[ORANGE, BLUE, GREEN])
+            self.axes.set_title(f'Ratio\'s of power sources {self.location} {self.year_choice.GetString(self.year_choice.GetSelection())}')
             self.axes.axis('equal')
             self.axes.set_frame_on(False)
         if self.plot_iter == 3:
-            self.axes.plot(self.total_energy, color='green', alpha=0.5, label ='Total ')
-            self.axes.plot(self.wind_energy, color='blue', alpha=0.5, label='Wind ')
-            self.axes.plot(self.solar_energy, color='yellow', alpha=0.5, label='Solar ')
+            self.axes.plot(self.total_energy, color=GREEN, alpha=0.5, label ='Total ')
+            self.axes.plot(self.wind_energy, color=BLUE, alpha=0.5, label='Wind ')
+            self.axes.plot(self.solar_energy, color=ORANGE, alpha=0.5, label='Solar ')
             self.axes.plot(np.cumsum(self.demand), color='red', alpha=0.5, label='Demand')
             self.axes.set_xlabel('Hours')
             self.axes.set_ylabel('kWh')
-            self.axes.set_title('Split energy for ' + self.location + ' ' + self.year_choice.GetString(self.year_choice.GetSelection()))
+            self.axes.set_title(f'Split energy for {self.location} {self.year_choice.GetString(self.year_choice.GetSelection())}')
             self.axes.legend(loc='upper left')
             self.axes.set_frame_on(True)
             self.axes.axis('tight')
@@ -799,12 +807,12 @@ class SimTab(wx.Panel):
                     elif(0 > batterycharge[-1]) :
                         batterycharge[-1] = 0
                         Powershortage.append(len(batterycharge)-1)
-            self.axes.plot(batterycharge, color='green', alpha=0.5, label='Storage')
+            self.axes.plot(batterycharge, color=GREEN, alpha=0.5, label='Storage')
             if len(Powershortage) == 0:
                 self.axes.scatter(np.zeros(len(Powershortage)), Powershortage, color='red')
             self.axes.set_xlabel('Hours')
             self.axes.set_ylabel('kW')
-            self.axes.set_title('Power from storage ' + self.location + ' ' + self.year_choice.GetString(self.year_choice.GetSelection()))
+            self.axes.set_title(f'Power from storage {self.location} {self.year_choice.GetString(self.year_choice.GetSelection())}')
             self.axes.set_frame_on(True)
             self.axes.axis('tight')
         self.canvas.draw()
@@ -1734,39 +1742,44 @@ class TrainTab(wx.Panel):
 
         # Check which graph is selected and draw it.
         if self.plot_iter == 0:
-            self.axes.plot(np.mean(np.reshape(self.total_power[:8760], (365,24)), axis=1), color='green', alpha=0.5, label='Total')
-            self.axes.plot(np.mean(np.reshape(self.demand[:8760], (365,24)), axis=1), color='red', alpha=0.5, label='Demand')
+            self.axes.plot(np.mean(np.reshape(self.total_power[:8760], (365,24)), axis=1),
+                           color=GREEN, alpha=0.5, label='Total')
+            self.axes.plot(np.mean(np.reshape(self.demand[:8760], (365,24)), axis=1),
+                           color='red', alpha=0.5, label='Demand')
             self.axes.set_xlabel('Days')
             self.axes.set_ylabel('kW')
-            self.axes.set_title('Power output for ' + self.dialog.location + ' ' + self.dialog.year_choice.GetString(self.dialog.year_choice.GetSelection()))
+            self.axes.set_title(f'Power output for {self.dialog.location} {self.dialog.year_choice.GetString(self.dialog.year_choice.GetSelection())}')
             self.axes.legend(loc='upper left')
             self.axes.set_frame_on(True)
             self.axes.axis('tight')
         if self.plot_iter == 1:
-            self.axes.plot(np.mean(np.reshape(self.solar_power[:8760], (365,24)), axis=1), color='yellow', alpha=0.5, label='Solar')
-            self.axes.plot(np.mean(np.reshape(self.wind_power[:8760], (365,24)), axis=1), color='blue', alpha=0.5, label='Wind')
-            self.axes.plot(np.mean(np.reshape(self.demand[:8760], (365,24)), axis=1), color='red', alpha=0.5, label='Demand')
+            self.axes.plot(np.mean(np.reshape(self.solar_power[:8760], (365,24)), axis=1), 
+                           color=ORANGE, alpha=0.5, label='Solar')
+            self.axes.plot(np.mean(np.reshape(self.wind_power[:8760], (365,24)), axis=1), 
+                           color=BLUE, alpha=0.5, label='Wind')
+            self.axes.plot(np.mean(np.reshape(self.demand[:8760], (365,24)), axis=1), 
+                           color='red', alpha=0.5, label='Demand')
             self.axes.set_xlabel('Days')
             self.axes.set_ylabel('kW')
-            self.axes.set_title('Split power output for ' + self.dialog.location + ' ' + self.dialog.year_choice.GetString(self.dialog.year_choice.GetSelection()))
+            self.axes.set_title(f'Split power output for {self.dialog.location} {self.dialog.year_choice.GetString(self.dialog.year_choice.GetSelection())}')
             self.axes.legend(loc='upper left')
             self.axes.set_frame_on(True)
             self.axes.axis('tight')
         if self.plot_iter == 2:
             labels = 'Solar', 'Wind', 'Storage'
             sizes =  self.solar_energy[-1], self.wind_energy[-1], self.power_storage
-            self.axes.pie(sizes, labels=labels, autopct='%1.1f%%')
-            self.axes.set_title('Ratio\'s of power sources ' + self.dialog.location + ' ' + self.dialog.year_choice.GetString(self.dialog.year_choice.GetSelection()))
+            self.axes.pie(sizes, labels=labels, autopct='%1.1f%%', colors=[ORANGE, BLUE, GREEN])
+            self.axes.set_title(f'Ratio\'s of power sources {self.dialog.location} {self.dialog.year_choice.GetString(self.dialog.year_choice.GetSelection())}')
             self.axes.axis('equal')
             self.axes.set_frame_on(False)
         if self.plot_iter == 3:
-            self.axes.plot(self.total_energy, color='green', alpha=0.5, label ='Total ')
-            self.axes.plot(self.wind_energy, color='blue', alpha=0.5, label='Wind ')
-            self.axes.plot(self.solar_energy, color='yellow', alpha=0.5, label='Solar ')
+            self.axes.plot(self.total_energy, color=GREEN, alpha=0.5, label ='Total ')
+            self.axes.plot(self.wind_energy, color=BLUE, alpha=0.5, label='Wind ')
+            self.axes.plot(self.solar_energy, color=ORANGE, alpha=0.5, label='Solar ')
             self.axes.plot(np.cumsum(self.demand), color='red', alpha=0.5, label='Demand')
             self.axes.set_xlabel('Hours')
             self.axes.set_ylabel('kWh')
-            self.axes.set_title('Split energy for  ' + self.dialog.location + ' ' + self.dialog.year_choice.GetString(self.dialog.year_choice.GetSelection()))
+            self.axes.set_title(f'Split energy for {self.dialog.location} {self.dialog.year_choice.GetString(self.dialog.year_choice.GetSelection())}')
             self.axes.legend(loc='upper left')
             self.axes.set_frame_on(True)
             self.axes.axis('tight')
@@ -1785,12 +1798,12 @@ class TrainTab(wx.Panel):
                     elif(0 > batterycharge[-1]) :
                         batterycharge[-1] = 0
                         Powershortage.append(len(batterycharge)-1)
-            self.axes.plot(batterycharge, color='green', alpha=0.5, label='Storage')
+            self.axes.plot(batterycharge, color=GREEN, alpha=0.5, label='Storage')
             if len(Powershortage) == 0:
                 self.axes.scatter(np.zeros(len(Powershortage)), Powershortage, color='red')
             self.axes.set_xlabel('Hours')
             self.axes.set_ylabel('kW')
-            self.axes.set_title('Power from storage ' + self.dialog.location + ' ' + self.dialog.year_choice.GetString(self.dialog.year_choice.GetSelection()))
+            self.axes.set_title(f'Power from storage {self.dialog.location} {self.dialog.year_choice.GetString(self.dialog.year_choice.GetSelection())}')
             self.axes.set_frame_on(True)
             self.axes.axis('tight')
         self.canvas.draw()
@@ -1837,7 +1850,7 @@ class TrainTab(wx.Panel):
     # Let the user know when a training is done.
     def on_training_done(self, evt):
         
-        file_info = 'Training done for ' + self.dialog.location + ' ' + self.dialog.year_choice.GetString(self.dialog.year_choice.GetSelection())
+        file_info = f'Training done for {self.dialog.location} {self.dialog.year_choice.GetString(self.dialog.year_choice.GetSelection())}'
         wx.MessageBox(file_info, 'Training done', wx.OK)
 
         self.progress.SetValue(0)
