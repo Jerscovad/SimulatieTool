@@ -28,6 +28,7 @@ def field_info(name):
             'sp_ang_min': 'Lowest angle of solar panels. Range from 0 to 90 degrees. Angle above 90 or below 0 will produce unrealistic numbers.',
             'sp_ang_max': 'Highest angle of solar panels. Range from 0 to 90 degrees. Angle above 90 or below 0 will produce unrealistic numbers.',
             'sp_or_min': 'Solar panel minimum azimuth orientation. South = 0, North = -180, East = -90, West = 90. Range from -180 to 179.',
-            'sp_or_max': 'Solar panel maximum azimuth orientation. South = 0, North = -180, East = -90, West = 90. Range from -180 to 179.'
+            'sp_or_max': 'Solar panel maximum azimuth orientation. South = 0, North = -180, East = -90, West = 90. Range from -180 to 179.',
+            'n_sp_configs': 'Number of solar configurations used for training. Remaining configurations will be set to 0.'
          }
     return switcher.get(name,"No information for requested field")

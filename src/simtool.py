@@ -1007,7 +1007,7 @@ class InputDialog(wx.Dialog):
 
         #Number of configs.
         n_sp_configs_txt = wx.StaticText(self, wx.ID_ANY, 'Number of configs ')
-        self.n_sp_configs_list = wx.Choice(self, wx.ID_ANY, choices=['4', '3', '2', '1'])
+        self.n_sp_configs_list = wx.Choice(self, wx.ID_ANY, choices=['4', '3', '2', '1'], name='n_sp_configs')
 
         sol_input_grid.AddMany([(sp_area_min_txt, 0, wx.ALL, 2), (self.sp_area_min_field, 0, wx.ALL, 2),
                                 (sp_or_min_txt, 0, wx.ALL, 2), (self.sp_or_min_field, 0, wx.ALL, 2),
@@ -1108,6 +1108,14 @@ class InputDialog(wx.Dialog):
         self.surplus_price_field.Bind(wx.EVT_MOTION, self.on_mouse_over)
         self.load_default_button.Bind(wx.EVT_MOTION, self.on_mouse_over)
         self.save_default_button.Bind(wx.EVT_MOTION, self.on_mouse_over)
+        self.sp_eff_field.Bind(wx.EVT_MOTION, self.on_mouse_over)
+        self.sp_area_min_field.Bind(wx.EVT_MOTION, self.on_mouse_over)
+        self.sp_area_max_field.Bind(wx.EVT_MOTION, self.on_mouse_over)
+        self.sp_ang_min_field.Bind(wx.EVT_MOTION, self.on_mouse_over)
+        self.sp_ang_max_field.Bind(wx.EVT_MOTION, self.on_mouse_over)
+        self.sp_or_min_field.Bind(wx.EVT_MOTION, self.on_mouse_over)
+        self.sp_or_max_field.Bind(wx.EVT_MOTION, self.on_mouse_over)
+        self.n_sp_configs_list.Bind(wx.EVT_MOTION, self.on_mouse_over)
 
         #Layout of the window
         check_txt_sizer.Add(trainby_txt, 0, wx.ALL, 2)
@@ -1903,7 +1911,6 @@ class TurbineDialog(wx.Dialog):
         dataframe['power'] = powercurve
         dataframe['wind'] = windcurve
         dataframe.to_csv(path)
-
 
     def on_turbine_selected(self, event):
         ttype = self.turbine_choice.GetString(self.turbine_choice.GetCurrentSelection())
