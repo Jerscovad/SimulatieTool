@@ -242,6 +242,8 @@ class FileWriter(threading.Thread):
         cost_sheet.insert_chart('F2', cost_chart)
 
         datasheet = data_file.add_worksheet('Output')
+        # Create category labels for excel
+        datasheet.write_column('A2', [i for i in range(8761)])
 
         datasheet.write('B1', 'Hourly output', bold)
         datasheet.write('B2', 'Solar Power', bold)
@@ -261,6 +263,9 @@ class FileWriter(threading.Thread):
             datasheet.write_column('H3', data['P_dem'])
             datasheet.write('I2', 'Demand', bold)
             datasheet.write_column('I3', data['E_dem'])
+
+        # Create category labels for excel
+        datasheet.write_column('J2', [i for i in range(366)])
 
         datasheet.write('K1', 'Daily output', bold)
         datasheet.write('K2', 'Solar Power', bold)
@@ -288,38 +293,38 @@ class FileWriter(threading.Thread):
         chartsheet_4 = data_file.add_worksheet('Energy graphs 2')
 
         # Create charts 
-        p_totchart = data_file.add_chart({'type':'line'})
-        p_solarchart = data_file.add_chart({'type':'line'})
-        p_windchart = data_file.add_chart({'type':'line'})
-        p_allchart = data_file.add_chart({'type':'line'})
+        p_totchart = data_file.add_chart({'type':'line', 'subtype': 'stacked'})
+        p_solarchart = data_file.add_chart({'type':'line', 'subtype': 'stacked'})
+        p_windchart = data_file.add_chart({'type':'line', 'subtype': 'stacked'})
+        p_allchart = data_file.add_chart({'type':'line', 'subtype': 'stacked'})
 
         # Add the data to corresponding chart
-        p_totchart.add_series({'name': 'combined power', 'values': 'Output!$F$3:$F$8762', 'line' :{'color': '#23BF00', 'width': 2,'transparency': 50}})
-        p_solarchart.add_series({'name': 'solar power', 'values': 'Output!$B$3:$B$8762', 'line' :{'color': '#FF9900', 'width': 2,'transparency': 50}})
-        p_windchart.add_series({'name': 'wind power', 'values': 'Output!$D$3:$D$8762', 'line' :{'color': '#4287F5', 'width': 2,'transparency': 50}})
-        p_allchart.add_series({'name': 'solar power', 'values': 'Output!$B$3:$B$8762', 'line' :{'color': '#FF9900', 'width': 2,'transparency': 50}})
-        p_allchart.add_series({'name': 'wind power', 'values': 'Output!$D$3:$D$8762', 'line' :{'color': '#4287F5', 'width': 2,'transparency': 50}})
-        p_allchart.add_series({'name': 'total power', 'values': 'Output!$F$3:$F$8762', 'line' :{'color': '#23BF00', 'width': 2,'transparency': 50}})
+        p_totchart.add_series({'name': 'combined power', 'values': 'Output!$F$3:$F$8762', 'categories':'Output!$A$2:$A$8762', 'line' :{'color': '#23BF00', 'width': 2,'transparency': 50}})
+        p_solarchart.add_series({'name': 'solar power', 'values': 'Output!$B$3:$B$8762', 'categories':'Output!$A$2:$A$8762', 'line' :{'color': '#FF9900', 'width': 2,'transparency': 50}})
+        p_windchart.add_series({'name': 'wind power', 'values': 'Output!$D$3:$D$8762', 'categories':'Output!$A$2:$A$8762', 'line' :{'color': '#4287F5', 'width': 2,'transparency': 50}})
+        p_allchart.add_series({'name': 'solar power', 'values': 'Output!$B$3:$B$8762', 'categories':'Output!$A$2:$A$8762', 'line' :{'color': '#FF9900', 'width': 2,'transparency': 50}})
+        p_allchart.add_series({'name': 'wind power', 'values': 'Output!$D$3:$D$8762', 'categories':'Output!$A$2:$A$8762', 'line' :{'color': '#4287F5', 'width': 2,'transparency': 50}})
+        p_allchart.add_series({'name': 'total power', 'values': 'Output!$F$3:$F$8762', 'categories':'Output!$A$2:$A$8762', 'line' :{'color': '#23BF00', 'width': 2,'transparency': 50}})
 
         # If there's a demand variable add it
         if self.demand:
-            p_totchart.add_series({'name': 'demand', 'values': 'Output!$H$3:$H$8762', 'line' :{'color': 'red', 'width': 2,'transparency': 50}})
-            p_solarchart.add_series({'name': 'demand', 'values': 'Output!$H$3:$H$8762', 'line' :{'color': 'red', 'width': 2,'transparency': 50}})
-            p_windchart.add_series({'name': 'demand', 'values': 'Output!$H$3:$H$8762', 'line' :{'color': 'red', 'width': 2,'transparency': 50}})
-            p_allchart.add_series({'name': 'demand', 'values': 'Output!$H$3:$H$8762', 'line' :{'color': 'red', 'width': 2,'transparency': 50}})
+            p_totchart.add_series({'name': 'demand', 'values': 'Output!$H$3:$H$8762', 'categories':'Output!$A$2:$A$8762', 'line' :{'color': 'red', 'width': 2,'transparency': 50}})
+            p_solarchart.add_series({'name': 'demand', 'values': 'Output!$H$3:$H$8762', 'categories':'Output!$A$2:$A$8762', 'line' :{'color': 'red', 'width': 2,'transparency': 50}})
+            p_windchart.add_series({'name': 'demand', 'values': 'Output!$H$3:$H$8762', 'categories':'Output!$A$2:$A$8762', 'line' :{'color': 'red', 'width': 2,'transparency': 50}})
+            p_allchart.add_series({'name': 'demand', 'values': 'Output!$H$3:$H$8762', 'categories':'Output!$A$2:$A$8762', 'line' :{'color': 'red', 'width': 2,'transparency': 50}})
 
         # Set chart properties
-        p_totchart.set_x_axis({'name': 'Hours', 'interval_unit': '100'})
-        p_totchart.set_y_axis({'name': 'Power in kW', 'interval_unit': '1000'})
+        p_totchart.set_x_axis({'name': 'Hours', 'interval_unit': '100', 'min': '0','interval_tick': '100'})
+        p_totchart.set_y_axis({'name': 'Power in kW', 'interval_unit': '1000', 'min': '0'})
         p_totchart.set_title({'name': 'Combined solar & wind power'})
-        p_solarchart.set_x_axis({'name': 'Hours', 'interval_unit': '100'})
-        p_solarchart.set_y_axis({'name': 'Power in kW', 'interval_unit': '1000'})
+        p_solarchart.set_x_axis({'name': 'Hours', 'interval_unit': '100', 'min': '0','interval_tick': '100'})
+        p_solarchart.set_y_axis({'name': 'Power in kW', 'interval_unit': '1000', 'min': '0'})
         p_solarchart.set_title({'name':'Solar power'})
-        p_windchart.set_x_axis({'name': 'Hours', 'interval_unit': '100'})
-        p_windchart.set_y_axis({'name': 'Power in kW', 'interval_unit': '1000'})
+        p_windchart.set_x_axis({'name': 'Hours', 'interval_unit': '100', 'min': '0','interval_tick': '100'})
+        p_windchart.set_y_axis({'name': 'Power in kW', 'interval_unit': '1000', 'min': '0'})
         p_windchart.set_title({'name': 'Wind power'})
-        p_allchart.set_x_axis({'name': 'Hours', 'interval_unit': '100'})
-        p_allchart.set_y_axis({'name': 'Power in kW', 'interval_unit': '1000'})
+        p_allchart.set_x_axis({'name': 'Hours', 'interval_unit': '100', 'min': '0','interval_tick': '100'})
+        p_allchart.set_y_axis({'name': 'Power in kW', 'interval_unit': '1000', 'min': '0'})
         p_allchart.set_title({'name': 'Split power'})    
         
         # Insert the charts into the sheet
@@ -335,31 +340,31 @@ class FileWriter(threading.Thread):
         p_all_avgchart = data_file.add_chart({'type':'line'})
 
         # Add the values to corresponding charts
-        p_tot_avgchart.add_series({'name':'combined power', 'values':'Output!$O$3:$O$367', 'line':{'color':'#23BF00', 'width': 2, 'transparency': 50}})
-        p_sol_avgchart.add_series({'name':'solar power', 'values':'Output!$K$3:$K$367', 'line':{'color':'#FF9900','width':2,'transparency':50}})
-        p_wind_avgchart.add_series({'name':'wind power', 'values':'Output!$M$3:$M$367', 'line':{'color':'#4287F5','width':2,'transparency':50}})
-        p_all_avgchart.add_series({'name':'solar power', 'values':'Output!$K$3:$K$367', 'line':{'color':'#FF9900','width':2,'transparency':50}})
-        p_all_avgchart.add_series({'name':'wind power', 'values':'Output!$M$3:$M$367', 'line':{'color':'#4287F5', 'width': 2, 'transparency': 50}})
-        p_all_avgchart.add_series({'name':'combined power', 'values':'Output!$O$3:$O$367', 'line':{'color':'#23BF00', 'width': 2, 'transparency': 50}})        
+        p_tot_avgchart.add_series({'name':'combined power', 'values':'Output!$O$3:$O$367','categories':'Output!$J$2:$J$367', 'line':{'color':'#23BF00', 'width': 2, 'transparency': 50}})
+        p_sol_avgchart.add_series({'name':'solar power', 'values':'Output!$K$3:$K$367','categories':'Output!$J$2:$J$367', 'line':{'color':'#FF9900','width':2,'transparency':50}})
+        p_wind_avgchart.add_series({'name':'wind power', 'values':'Output!$M$3:$M$367','categories':'Output!$J$2:$J$367', 'line':{'color':'#4287F5','width':2,'transparency':50}})
+        p_all_avgchart.add_series({'name':'solar power', 'values':'Output!$K$3:$K$367','categories':'Output!$J$2:$J$367', 'line':{'color':'#FF9900','width':2,'transparency':50}})
+        p_all_avgchart.add_series({'name':'wind power', 'values':'Output!$M$3:$M$367','categories':'Output!$J$2:$J$367', 'line':{'color':'#4287F5', 'width': 2, 'transparency': 50}})
+        p_all_avgchart.add_series({'name':'combined power', 'values':'Output!$O$3:$O$367','categories':'Output!$J$2:$J$367', 'line':{'color':'#23BF00', 'width': 2, 'transparency': 50}})        
 
         # If there's a demand variabeble, ad it to the charts
         if self.demand:
-            p_sol_avgchart.add_series({'name':'demand', 'values':'Output!$Q$3:$Q$367', 'line': {'color':'red', 'width':2}})
-            p_tot_avgchart.add_series({'name':'demand', 'values':'Output!$Q$3:$Q$367', 'line':{'color':'red', 'width': 2}})
-            p_wind_avgchart.add_series({'name':'demand', 'values':'Output!$Q$3:$Q$367', 'line': {'color':'red', 'width':2}})
-            p_all_avgchart.add_series({'name':'demand', 'values':'Output!$Q$3:$Q$367', 'line': {'color':'red', 'width':2}})
+            p_sol_avgchart.add_series({'name':'demand', 'values':'Output!$Q$3:$Q$367','categories':'Output!$J$2:$J$367', 'line': {'color':'red', 'width':2}})
+            p_tot_avgchart.add_series({'name':'demand', 'values':'Output!$Q$3:$Q$367','categories':'Output!$J$2:$J$367', 'line':{'color':'red', 'width': 2}})
+            p_wind_avgchart.add_series({'name':'demand', 'values':'Output!$Q$3:$Q$367','categories':'Output!$J$2:$J$367', 'line': {'color':'red', 'width':2}})
+            p_all_avgchart.add_series({'name':'demand', 'values':'Output!$Q$3:$Q$367','categories':'Output!$J$2:$J$367', 'line': {'color':'red', 'width':2}})
         # Set the chart axis and title properties
-        p_tot_avgchart.set_x_axis({'name': 'Days','interval_unit': '10'})
-        p_tot_avgchart.set_y_axis({'name': 'Power','interval_unit': '1000'})
+        p_tot_avgchart.set_x_axis({'name': 'Days','interval_unit': '10', 'min': '0','interval_tick': '10'})
+        p_tot_avgchart.set_y_axis({'name': 'Power','interval_unit': '1000', 'min': '0'})
         p_tot_avgchart.set_title({'name':'Combined solar & wind power'})
-        p_sol_avgchart.set_x_axis({'name':'Days', 'interva;_unit': '10'})
-        p_sol_avgchart.set_y_axis({'name':'Power', 'interval_unit': '1000'})
+        p_sol_avgchart.set_x_axis({'name':'Days', 'interval_unit': '10', 'min': '0','interval_tick': '10'})
+        p_sol_avgchart.set_y_axis({'name':'Power', 'interval_unit': '1000', 'min': '0'})
         p_sol_avgchart.set_title({'name':'Solar power'})
-        p_wind_avgchart.set_x_axis({'name':'Days', 'interva;_unit': '10'})
-        p_wind_avgchart.set_y_axis({'name':'Power', 'interval_unit': '1000'})
+        p_wind_avgchart.set_x_axis({'name':'Days', 'interval_unit': '10', 'min': '0','interval_tick': '10'})
+        p_wind_avgchart.set_y_axis({'name':'Power', 'interval_unit': '1000', 'min': '0'})
         p_wind_avgchart.set_title({'name':'Wind power'})
-        p_all_avgchart.set_x_axis({'name':'Days', 'interva;_unit': '10'})
-        p_all_avgchart.set_y_axis({'name':'Power', 'interval_unit': '1000'})
+        p_all_avgchart.set_x_axis({'name':'Days', 'interval_unit': '10', 'min': '0','interval_tick': '10','interval_tick': '10','interval_tick': '10'})
+        p_all_avgchart.set_y_axis({'name':'Power', 'interval_unit': '1000', 'min': '0'})
         p_all_avgchart.set_title({'name':'Split power'})
         
         # Insert the charts into the sheet
@@ -377,32 +382,32 @@ class FileWriter(threading.Thread):
         
 
         # Add the data to corresponding chart
-        e_totchart.add_series({'name': 'combined energy', 'values': 'Output!$G$3:$G$8762', 'line' :{'color': '#23BF00', 'width': 2,'transparency': 50}})
-        e_solarchart.add_series({'name': 'solar energy', 'values': 'Output!$C$3:$C$8762', 'line' :{'color': '#FF9900', 'width': 2,'transparency': 50}})
-        e_windchart.add_series({'name': 'wind energy', 'values': 'Output!$E$3:$E$8762', 'line' :{'color': '#4287F5', 'width': 2,'transparency': 50}})
-        e_allchart.add_series({'name': 'solar energy', 'values': 'Output!$C$3:$C$8762', 'line' :{'color': '#FF9900', 'width': 2,'transparency': 50}})
-        e_allchart.add_series({'name': 'wind energy', 'values': 'Output!$E$3:$E$8762', 'line' :{'color': '#4287F5', 'width': 2,'transparency': 50}})
-        e_allchart.add_series({'name': 'combined energy', 'values': 'Output!$G$3:$G$8762', 'line' :{'color': '#23BF00', 'width': 2,'transparency': 50}})
+        e_totchart.add_series({'name': 'combined energy', 'values': 'Output!$G$3:$G$8762', 'categories':'Output!$A$2:$A$8762', 'line' :{'color': '#23BF00', 'width': 2,'transparency': 50}})
+        e_solarchart.add_series({'name': 'solar energy', 'values': 'Output!$C$3:$C$8762', 'categories':'Output!$A$2:$A$8762', 'line' :{'color': '#FF9900', 'width': 2,'transparency': 50}})
+        e_windchart.add_series({'name': 'wind energy', 'values': 'Output!$E$3:$E$8762', 'categories':'Output!$A$2:$A$8762', 'line' :{'color': '#4287F5', 'width': 2,'transparency': 50}})
+        e_allchart.add_series({'name': 'solar energy', 'values': 'Output!$C$3:$C$8762', 'categories':'Output!$A$2:$A$8762', 'line' :{'color': '#FF9900', 'width': 2,'transparency': 50}})
+        e_allchart.add_series({'name': 'wind energy', 'values': 'Output!$E$3:$E$8762', 'categories':'Output!$A$2:$A$8762', 'line' :{'color': '#4287F5', 'width': 2,'transparency': 50}})
+        e_allchart.add_series({'name': 'combined energy', 'values': 'Output!$G$3:$G$8762', 'categories':'Output!$A$2:$A$8762', 'line' :{'color': '#23BF00', 'width': 2,'transparency': 50}})
 
         # If there's a demand variable add it
         if self.demand:
-            e_totchart.add_series({'name': 'demand', 'values': 'Output!$I$3:$I$8762', 'line' :{'color': 'red', 'width': 2,'transparency': 50}})
-            e_solarchart.add_series({'name': 'demand', 'values': 'Output!$I$3:$I$8762', 'line' :{'color': 'red', 'width': 2,'transparency': 50}})
-            e_windchart.add_series({'name': 'demand', 'values': 'Output!$I$3:$I$8762', 'line' :{'color': 'red', 'width': 2,'transparency': 50}})
-            e_allchart.add_series({'name': 'demand', 'values': 'Output!$I$3:$I$8762', 'line' :{'color': 'red', 'width': 2,'transparency': 50}})
+            e_totchart.add_series({'name': 'demand', 'values': 'Output!$I$3:$I$8762', 'categories':'Output!$A$2:$A$8762', 'line' :{'color': 'red', 'width': 2,'transparency': 50}})
+            e_solarchart.add_series({'name': 'demand', 'values': 'Output!$I$3:$I$8762', 'categories':'Output!$A$2:$A$8762', 'line' :{'color': 'red', 'width': 2,'transparency': 50}})
+            e_windchart.add_series({'name': 'demand', 'values': 'Output!$I$3:$I$8762', 'categories':'Output!$A$2:$A$8762', 'line' :{'color': 'red', 'width': 2,'transparency': 50}})
+            e_allchart.add_series({'name': 'demand', 'values': 'Output!$I$3:$I$8762', 'categories':'Output!$A$2:$A$8762', 'line' :{'color': 'red', 'width': 2,'transparency': 50}})
 
         # Set chart properties
-        e_totchart.set_x_axis({'name': 'Hours', 'interval_unit': '100'})
-        e_totchart.set_y_axis({'name': 'energy in kWh', 'interval_unit': '1000'})
+        e_totchart.set_x_axis({'name': 'Hours', 'interval_unit': '100', 'min': '0','interval_tick': '100'})
+        e_totchart.set_y_axis({'name': 'energy in kWh', 'interval_unit': '1000', 'min': '0'})
         e_totchart.set_title({'name': 'Combined solar & wind energy'})
-        e_solarchart.set_x_axis({'name': 'Hours', 'interval_unit': '100'})
-        e_solarchart.set_y_axis({'name': 'energy in kWh', 'interval_unit': '1000'})
+        e_solarchart.set_x_axis({'name': 'Hours', 'interval_unit': '100', 'min': '0','interval_tick': '100'})
+        e_solarchart.set_y_axis({'name': 'energy in kWh', 'interval_unit': '1000', 'min': '0'})
         e_solarchart.set_title({'name':'Solar energy'})
-        e_windchart.set_x_axis({'name': 'Hours', 'interval_unit': '100'})
-        e_windchart.set_y_axis({'name': 'energy in kWh', 'interval_unit': '1000'})
+        e_windchart.set_x_axis({'name': 'Hours', 'interval_unit': '100', 'min': '0','interval_tick': '100'})
+        e_windchart.set_y_axis({'name': 'energy in kWh', 'interval_unit': '1000', 'min': '0'})
         e_windchart.set_title({'name': 'Wind energy'})
-        e_allchart.set_x_axis({'name': 'Hours', 'interval_unit': '100'})
-        e_allchart.set_y_axis({'name': 'energy in kWh', 'interval_unit': '1000'})
+        e_allchart.set_x_axis({'name': 'Hours', 'interval_unit': '100', 'min': '0','interval_tick': '100'})
+        e_allchart.set_y_axis({'name': 'energy in kWh', 'interval_unit': '1000', 'min': '0'})
         e_allchart.set_title({'name': 'Split energy'})    
         
         # Insert the charts into the sheet
@@ -418,31 +423,31 @@ class FileWriter(threading.Thread):
         e_all_avgchart = data_file.add_chart({'type':'line'})
 
         # Add the values to corresponding charts
-        e_tot_avgchart.add_series({'name':'combined energy', 'values':'Output!$P$3:$P$367', 'line':{'color':'#23BF00', 'width': 2, 'transparency': 50}})
-        e_sol_avgchart.add_series({'name':'solar energy', 'values':'Output!$L$3:$L$367', 'line':{'color':'#FF9900','width':2,'transparency':50}})
-        e_wind_avgchart.add_series({'name':'wind energy', 'values':'Output!$N$3:$N$367', 'line':{'color':'#4287F5','width':2,'transparency':50}})
-        e_all_avgchart.add_series({'name':'solar energy', 'values':'Output!$L$3:$L$367', 'line':{'color':'#FF9900','width':2,'transparency':50}})
-        e_all_avgchart.add_series({'name':'wind energy', 'values':'Output!$N$3:$N$367', 'line':{'color':'#4287F5', 'width': 2, 'transparency': 50}})
-        e_all_avgchart.add_series({'name':'combined energy', 'values':'Output!$P$3:$P$367', 'line':{'color':'#23BF00', 'width': 2, 'transparency': 50}})        
+        e_tot_avgchart.add_series({'name':'combined energy', 'values':'Output!$P$3:$P$367','categories':'Output!$J$2:$J$367', 'line':{'color':'#23BF00', 'width': 2, 'transparency': 50}})
+        e_sol_avgchart.add_series({'name':'solar energy', 'values':'Output!$L$3:$L$367','categories':'Output!$J$2:$J$367', 'line':{'color':'#FF9900','width':2,'transparency':50}})
+        e_wind_avgchart.add_series({'name':'wind energy', 'values':'Output!$N$3:$N$367','categories':'Output!$J$2:$J$367', 'line':{'color':'#4287F5','width':2,'transparency':50}})
+        e_all_avgchart.add_series({'name':'solar energy', 'values':'Output!$L$3:$L$367','categories':'Output!$J$2:$J$367', 'line':{'color':'#FF9900','width':2,'transparency':50}})
+        e_all_avgchart.add_series({'name':'wind energy', 'values':'Output!$N$3:$N$367','categories':'Output!$J$2:$J$367', 'line':{'color':'#4287F5', 'width': 2, 'transparency': 50}})
+        e_all_avgchart.add_series({'name':'combined energy', 'values':'Output!$P$3:$P$367','categories':'Output!$J$2:$J$367', 'line':{'color':'#23BF00', 'width': 2, 'transparency': 50}})        
 
         # If there's a demand variabeble, ad it to the charts
         if self.demand:
-            e_sol_avgchart.add_series({'name':'demand', 'values':'Output!$R$3:$R$367', 'line': {'color':'red', 'width':2}})
-            e_tot_avgchart.add_series({'name':'demand', 'values':'Output!$R$3:$R$367', 'line':{'color':'red', 'width': 2}})
-            e_wind_avgchart.add_series({'name':'demand', 'values':'Output!$R$3:$R$367', 'line': {'color':'red', 'width':2}})
-            e_all_avgchart.add_series({'name':'demand', 'values':'Output!$R$3:$R$367', 'line': {'color':'red', 'width':2}})
+            e_sol_avgchart.add_series({'name':'demand', 'values':'Output!$R$3:$R$367','categories':'Output!$J$2:$J$367', 'line': {'color':'red', 'width':2}})
+            e_tot_avgchart.add_series({'name':'demand', 'values':'Output!$R$3:$R$367','categories':'Output!$J$2:$J$367', 'line':{'color':'red', 'width': 2}})
+            e_wind_avgchart.add_series({'name':'demand', 'values':'Output!$R$3:$R$367','categories':'Output!$J$2:$J$367', 'line': {'color':'red', 'width':2}})
+            e_all_avgchart.add_series({'name':'demand', 'values':'Output!$R$3:$R$367','categories':'Output!$J$2:$J$367', 'line': {'color':'red', 'width':2}})
         # Set the chart axis and title properties
-        e_tot_avgchart.set_x_axis({'name': 'Days','interval_unit': '10'})
-        e_tot_avgchart.set_y_axis({'name': 'energy in kWh','interval_unit': '1000'})
+        e_tot_avgchart.set_x_axis({'name': 'Days','interval_unit': '10', 'min': '0','interval_tick': '10'})
+        e_tot_avgchart.set_y_axis({'name': 'energy in kWh','interval_unit': '1000', 'min': '0'})
         e_tot_avgchart.set_title({'name':'Combined solar & wind energy'})
-        e_sol_avgchart.set_x_axis({'name':'Days', 'interva;_unit': '10'})
-        e_sol_avgchart.set_y_axis({'name':'energy in kWh', 'interval_unit': '1000'})
+        e_sol_avgchart.set_x_axis({'name':'Days', 'interval_unit': '10', 'min': '0','interval_tick': '10'})
+        e_sol_avgchart.set_y_axis({'name':'energy in kWh', 'interval_unit': '1000', 'min': '0'})
         e_sol_avgchart.set_title({'name':'Solar energy'})
-        e_wind_avgchart.set_x_axis({'name':'Days', 'interva;_unit': '10'})
-        e_wind_avgchart.set_y_axis({'name':'energy in kWh', 'interval_unit': '1000'})
+        e_wind_avgchart.set_x_axis({'name':'Days', 'interval_unit': '10', 'min': '0','interval_tick': '10'})
+        e_wind_avgchart.set_y_axis({'name':'energy in kWh', 'interval_unit': '1000', 'min': '0'})
         e_wind_avgchart.set_title({'name':'Wind energy'})
-        e_all_avgchart.set_x_axis({'name':'Days', 'interva;_unit': '10'})
-        e_all_avgchart.set_y_axis({'name':'energy in kWh', 'interval_unit': '1000'})
+        e_all_avgchart.set_x_axis({'name':'Days', 'interval_unit': '10', 'min': '0','interval_tick': '10'})
+        e_all_avgchart.set_y_axis({'name':'energy in kWh', 'interval_unit': '1000', 'min': '0'})
         e_all_avgchart.set_title({'name':'Split energy'})
         
         # Insert the charts into the sheet
