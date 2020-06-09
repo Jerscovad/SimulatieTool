@@ -4,7 +4,7 @@ import numpy as np
 from copy import copy
 
 
-class GeneticAlgorith():
+class GeneticAlgorithm():
     """class to create new populations"""
     def __init__(self, mutation_percentage_chance, max_mutation_percentage,
                  n_optimal_to_select, n_different_to_select, n_random_to_select, keep_best):

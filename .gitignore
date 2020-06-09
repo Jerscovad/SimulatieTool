@@ -1,2 +1,5 @@
 *.pyc
 .DS_Store
+venv
+src/config/defaults/train_defaults.csv
+src/log.txt
