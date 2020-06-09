@@ -1984,6 +1984,6 @@ class MainFrame(wx.Frame):
         self.turbine_dialog.Show()
 
 if __name__ == "__main__":
-    app = wx.App()
+    app = wx.App(redirect=True, filename='log.txt')
     MainFrame().Show()
     app.MainLoop()
