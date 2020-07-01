@@ -464,7 +464,7 @@ class SimTab(wx.ScrolledWindow):
     Tab enclosing the simulation. Used for single simulations using specific inputs.
     """
     def __init__(self, parent):
-        wx.ScrolledWindow.__init__(self, parent)
+        wx.ScrolledWindow.__init__(self, parent, size=(1000,800))
         self.SetScrollRate(5,5)
 
         # Populate the locations list with all available locations
@@ -1391,7 +1391,7 @@ class TrainTab(wx.ScrolledWindow):
             Tab for training the genetic algorithm. 
             Also displays the graphs for corresponding congfiguration.
         """
-        wx.ScrolledWindow.__init__(self, parent)
+        wx.ScrolledWindow.__init__(self, parent, size=(1000,800))
         self.SetScrollRate(5,5)
 
         # Populate list with locations. 
