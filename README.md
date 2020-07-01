@@ -36,7 +36,7 @@ De handleiding van de simtool kun je [hier](https://github.com/Jerscovad/Simulat
 _____
 
 ## De Grafische User Interface (GUI)
-De GUI is gemaakt met behulp van de [wxPython](https://wxpython.org/), [matplotlib](https://matplotlib.org/) library. Dit heeft als voordeel dat de GUI op meerdere besturingssystemen ondersteuning heeft.
+De GUI is gemaakt met behulp van de [wxPython](https://wxpython.org/) en [matplotlib](https://matplotlib.org/) libraries. Dit heeft als voordeel dat de GUI op meerdere besturingssystemen ondersteuning heeft.
 
 De huidige versie heeft een eenvoudig globaal ontwerp zoals hieronder te zien is.
 ![GUI layout](https://github.com/Jerscovad/SimulatieTool/blob/master/images/design/GUI_classes.png)
@@ -52,10 +52,10 @@ De Simulatie functie is de basis waarop de tool is gebouwd. Het is ondergebracht
 
 Voor het simuleren met data afkomsten van Schiphol over het jaar 2016 wordt het Simulatie object als volgt geinitialiseerd:
 ```python
-Sim_schiphol = Simulator(Location('schiphol'),'2016', Windturbine(5))
+Sim_schiphol = Simulator(Location('schiphol'),'2016', Windturbine('3MW'))
 ```
 
-In de [__init__](https://github.com/Jerscovad/SimulatieTool/blob/master/src/simulator.py#L22) functie is te zien dat er meer parameters kunnen worden meegegeven maar deze zijn als [default parameter](https://docs.python.org/2.0/ref/function.html) gedefinieerd dus hoeft het in dit geval niet meegegeven te worden.
+In de [__init__](https://github.com/Jerscovad/SimulatieTool/blob/master/src/simulator.py#L22) functie is te zien dat er meer parameters kunnen worden meegegeven maar deze zijn als [default parameter](https://docs.python.org/2.0/ref/function.html) gedefinieerd. Dit betekend dat ze indien ze onveranderd blijven, niet ingevuld hoeven te worden. Bij de initialisatie wordt ook meteen de windturbine meegegeven. Dit is nodig om de juiste curve te gebruiken voor de windturbine. Meer over de windturbines en curves [hier]().
 
 ### De attributen
 De atributen zijn variabelen die nodig zijn ter ondersteuning van de functies. Deze worden ingevoerd door de gebruiker of worden uit een data bestand uitgelezen.
@@ -68,7 +68,7 @@ Korte omschrijving van ieder atribuut:
 - **Windturbine:** Windturbine object die informatie over de windturbine bevat. Zie [Windturbine klasse](https://github.com/Jerscovad/SimulatieTool/blob/master/src/generators.py)
 - **import_data:** bevat alle geimporteerde weerdata nodig voor de berekeningen. De data wordt bij initialisatie uitgelezen.
 - **ghi:** Globale horizontale straling. Gebruikt bij de zonne vermogen/energie berekening. Komt uit de import data.
-- **dni:** Direkte neerwaardse straling. Gebruikt bij de zonne vermoge/energie berekening. Komt uit de import data.
+- **dni:** Direkte neerwaardse straling. Gebruikt bij de zonne vermogen/energie berekening. Komt uit de import data.
 - **dates:** Datum informatie die bij de weerdata hoort. Komt uit de import data.
 - **doy:** Day of year. Gebruikt bij de zonne vermoge/energie berekening. Wordt gehaald uit de dates variabele.
 - **time:** Uur van de dag. Gebruikt bij de zonne vermoge/energie berekening. Komt uit de import data.
@@ -95,9 +95,8 @@ Naast de bovengenoemde ondersteunende attributen heeft deze functie ook nodig:
 * sp_eff(efficiency): De efficiëntie van de zonnepanelen in procenten.
 * gref: ...Wordt in de berekening wel gebruikt maar is altijd 0...
 
-De functie berkend het vermogen en de energie voor de zonnepanelen en 'returned' deze in twee aparte [numpy arrays](https://numpy.org/doc/stable/reference/generated/numpy.array.html?highlight=array#numpy.array). De grootte van deze arrays is afhankelijk van de weerdata die als input wordt meegegeven.
+De functie berkend het vermogen en de energie voor de zonnepanelen en 'returned' deze in twee aparte [numpy arrays](https://numpy.org/doc/stable/reference/generated/numpy.array.html?highlight=array#numpy.array). De grootte van deze arrays is afhankelijk van de weerdata die als input wordt meegegeven. Meer over de weerdata [hier]().
 
-Momenteel kan de functie alleen worden uitgevoerd met vier opstellingen. Bij minder dan vier kan 0 worden meegegeven als input van de resterende opstellingen.
 
 Stel je wilt dus het vermogen(power) en energie(energy) van de volgende opstellingen:
  * 100m met een hoek van 50 graden naar het zuiden gericht.
@@ -110,7 +109,8 @@ Onderstaande code zet dan de som van de vier opstellingen in de `power` en `ener
 power,energy = Sim_schiphol.calc_solar(Az=[0, -90, 90, 45],Inc=[50, 45, 30, 25],
                                      sp_area=[100, 200, 300, 400],sp_eff=16,gref=0)
 ```
-Aangezien de `sp_eff` en `gref` altijd 16 en 0 respectievelijk zijn, zijn ze als [default parameter](https://docs.python.org/2.0/ref/function.html) gedefiniëerd en kan bovenstaande ook als volgt worden geschreven:
+
+Als de `sp_eff` en `gref` niet worden aangepast kan het bovenstaande, aangezien ze [default parameter](https://docs.python.org/2.0/ref/function.html) zijn, als volgt worden geschreven:
 
 ```python
 power,energy = Sim_schiphol.calc_solar(Az=[0, -90, 90, 45],Inc=[50, 45, 30, 25],sp_area=[100, 200, 300, 400])
@@ -136,36 +136,70 @@ Combinatie van de twee bovenstaande zou worden:
 total_power,total_energy = Sim_schiphol.calc_total([100, 50, 0, 200, 45, -90, 300, 30, 90, 400, 25, 45],[5, 100], 16)
 ```
 
-De grootte van de numpy arrays (power en energy) die uit de functies afkomstig zijn, is afhankelijk van de grootte van de input data. De huidige input data is geformatteerd op een jaar uitgezet in uren dus iedere output zal 8760 data punten bevatten.
-
-
 _____
 
 ## De Train functie
 De train functie maakt gebruik van de Simulatie functie in combinatie met een gentisch algoritme(GA) om de optimale configuratie te vinden. Ter ondersteuning hiervan wordt ook een kosten calculator gebruikt.
+Dit is allemaal ondergebracht in een Trainer klasse.
 
 Onderstaande diagram geeft deels aan hoe de Train functie te werk gaat.
 ![training sequence](https://github.com/Jerscovad/SimulatieTool/blob/master/images/design/Train_sequence.png)
 
-Omdat de Train functie niet zijn eigen klasse heeft, hoeft het niet geinitialiseerd te worden maar wordt het gewoon als functie aangeroepen:
+
 ```python
-best = train(n_generations=100, group_size=100, surface_min=0, surface_max=10000000, 
-             angle_min=0, angle_max=90, orientation_min=-180, orientation_max=180, 
-             mutationPercentage=50, N_WIND_MIN=0, N_WIND_MAX=10, turbine_height=100,
-             cost_calculator=None, simulator=None, windturbineType=4, sp_efficiency=16)
+trainer = Trainer(parent, generations, group_size, n_configs, surface_min, 
+                 surface_max, angle_min, angle_max, orientation_min, 
+                 orientation_max, sp_eff, mutation_percentage, turbines_min, turbines_max, 
+                 turbine_height, turbine_type, solar_price, storage_price, demand, 
+                 shortage_price, turbine_price, surplus_price, train_by_price,
+                 location, year, latitude, longitude, terrain_factor)
 ```
 Korte omschrijving van de parameters:
-- **n_generations:** Hoeveelheid generaties van het GA. Een generatie bevat meerdere groepen.
+- **generations:** Hoeveelheid generaties van het GA. Een generatie bevat meerdere groepen.
 - **group_size:** Grootte van iedere generatie van het GA. Een groep bevat meedere configuraties.
+- **n_configs:** Hoeveel zonnepaneel configuraties er moeten zijn. Dit kan 1 tot 4 zijn.
 - **surface_min/surface_max:** Minimale/maximale oppervlakte die het GA mag gebruiken.
-- **angle_min/angle_min:** Minimale/maximale hoek ([Inc](https://github.com/Jerscovad/SimulatieTool#calc_solar-functie)) die het GA mag gebruiken
-- **orientation_min/orientation_max:** Minimale/maximale ([Az](https://github.com/Jerscovad/SimulatieTool#calc_solar-functie)) orientatie die het GA mag gebruiken.
+- **angle_min/angle_min:** Minimale/maximale hoek ([Inc](https://github.com/Jerscovad/SimulatieTool#calc_solar-functie)) dat het GA mag gebruiken
+- **orientation_min/orientation_max:** Minimale/maximale ([Az](https://github.com/Jerscovad/SimulatieTool#calc_solar-functie)) orientatie dat het GA mag gebruiken.
+- **sp_eff:** Efficientie van de zonnepanelen.
 - **mutationPercentage:** Percentage van verschil tussen iedere configuratie in een generatie.
-- **N_WIND_MIN/N_WIND_MAX:** Minimale/maximale aantal windturbines die het GA mag gebruiken.
+- **turbines_min/turbines_max:** Minimale/maximale aantal windturbines dat het GA mag gebruiken.
 - **turbine_height:** Hoogte van de rotor as van de windturbine.
-- **cost_calculator:** Costcalculator object die de kosten berekend tijdens de training. Bevat de stukprijzen van alle componenten.
-- **simulator:** Simulator object die de energie berekend voor iedere configuratie.
-- **windturbineType:** Type van de windturbine die wordt gebruikt tijden de training.
-- **sp_efficiency:** Efficientie van de zonnepanelen.
+- **turbine_type:** Het type van de windturbine.
+- **solar_price:** Prijs van de zonnepanelen in €/m<sup>2</sup>.
+- **storage_price:** Prijs van de opslag in €/kWh.
+- **demand:** De constante vraag van vermogen in kW.
+- **shortage_price:** Prijs van onderproductie €/kWh.
+- **turbine_price:** Prijs van de windturbine in €/kW.
+- **surplus_price:** Prijs van overproductie in €/kWh.
+- **train_by_price:** Moet het algoritme trainen volgens de kosten of volgens vermogen en energie.
+- **location:** Locatie waar de weerdata van afkomstig moet zijn.
+- **year:** Jaar waarin de weerdata is opgenomen.
+- **latitude:** Coördinaat van de locatie waar het om gaat. Wordt uit het Locatie object uitgelezen tenzij een waarde wordt ingevoerd.
+- **longitude:** Coördinaat van de locatie waar het om gaat. Wordt uit het Locatie object uitgelezen tenzij een waarde wordt ingevoerd.
+- **terrain_factor:** Terreingesteldheidsfactor die wordt gebruikt bij wind vermogen/energie berekening. Wordt uit het locatie object uitgelezen tenzij een waarde wordt ingevoerd.
+
+Met het Trainer object kan nu worden getrained door de `train` functie aan te roepen zoals in [deze](https://github.com/Jerscovad/SimulatieTool/blob/master/images/design/Train_sequence.png) afbeelding te zien is. Wanneer de training klaar is wordt de beste cofiguratie gereturned.
+
+_____
+
+## De Weerdata
+
+De weerdata is afkomstig uit KNMI data en is aangepast om gebruikt te kunnen worden in de simulatie functie. Daarnaast zijn uit de KNMI data ook nieuwe gegevens berekend die nodig zijn in de simulatie functie.
+Voor iedere locatie is per jaar de data verdeeld in verschillende `csv` bestanden.
+In ieder bestand zitten 8760 rijen met daarin:
+- Datum
+- Uur van de dag
+- Windsnelheid
+- Temperatuur (wordt momenteel niet gebruikt)
+- Q oftewel de GHI (Globale Horizontale Straling)
+- Luchtdruk (wordt momenteel niet gebruikt)
+- DNI (Direkte Neerwaartse Straling)
+
+Deze gegevens worden uit het bestand gelezen wanneer er een Simulator object wordt aangemaakt.
+
+_____
+
+## Windturbines
 
 _____
