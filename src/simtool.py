@@ -328,10 +328,10 @@ class FileWriter(threading.Thread):
         p_allchart.set_title({'name': 'Split power'})    
         
         # Insert the charts into the sheet
-        chartsheet_1.insert_chart('B2', p_totchart, {'x_scale': 20, 'y_scale': 2})
-        chartsheet_1.insert_chart('B38', p_solarchart, {'x_scale': 20, 'y_scale': 2})
-        chartsheet_1.insert_chart('B74', p_windchart, {'x_scale':20, 'y_scale': 2})
-        chartsheet_1.insert_chart('B110', p_allchart, {'x_scale': 20, 'y_scale': 2})
+        chartsheet_1.insert_chart('B2', p_totchart, {'x_scale': 4, 'y_scale': 2})
+        chartsheet_1.insert_chart('B38', p_solarchart, {'x_scale': 4, 'y_scale': 2})
+        chartsheet_1.insert_chart('B74', p_windchart, {'x_scale': 4, 'y_scale': 2})
+        chartsheet_1.insert_chart('B110', p_allchart, {'x_scale': 4, 'y_scale': 2})
 
         # Create charts
         p_tot_avgchart = data_file.add_chart({'type':'line'})
@@ -369,9 +369,9 @@ class FileWriter(threading.Thread):
         
         # Insert the charts into the sheet
         chartsheet_2.insert_chart('B2', p_tot_avgchart,{'x_scale': 4, 'y_scale':2})
-        chartsheet_2.insert_chart('B38', p_sol_avgchart,{'x_scale':4, 'y_scale':2})
-        chartsheet_2.insert_chart('B74', p_wind_avgchart,{'x_scale':4, 'y_scale':2})
-        chartsheet_2.insert_chart('B110', p_all_avgchart,{'x_scale':4, 'y_scale':2})
+        chartsheet_2.insert_chart('B38', p_sol_avgchart,{'x_scale': 4, 'y_scale':2})
+        chartsheet_2.insert_chart('B74', p_wind_avgchart,{'x_scale': 4, 'y_scale':2})
+        chartsheet_2.insert_chart('B110', p_all_avgchart,{'x_scale': 4, 'y_scale':2})
 
         """Do the same for energy data"""
 
@@ -411,10 +411,10 @@ class FileWriter(threading.Thread):
         e_allchart.set_title({'name': 'Split energy'})    
         
         # Insert the charts into the sheet
-        chartsheet_3.insert_chart('B2', e_totchart, {'x_scale': 8, 'y_scale': 2})
-        chartsheet_3.insert_chart('B38', e_solarchart, {'x_scale': 8, 'y_scale': 2})
-        chartsheet_3.insert_chart('B74', e_windchart, {'x_scale':8, 'y_scale': 2})
-        chartsheet_3.insert_chart('B110', e_allchart, {'x_scale': 8, 'y_scale': 2})
+        chartsheet_3.insert_chart('B2', e_totchart, {'x_scale': 4, 'y_scale': 2})
+        chartsheet_3.insert_chart('B38', e_solarchart, {'x_scale': 4, 'y_scale': 2})
+        chartsheet_3.insert_chart('B74', e_windchart, {'x_scale': 4, 'y_scale': 2})
+        chartsheet_3.insert_chart('B110', e_allchart, {'x_scale': 4, 'y_scale': 2})
 
         # Create charts
         e_tot_avgchart = data_file.add_chart({'type':'line'})
@@ -459,12 +459,13 @@ class FileWriter(threading.Thread):
         # Close file properly
         data_file.close()
 
-class SimTab(wx.Panel):
+class SimTab(wx.ScrolledWindow):
     """
     Tab enclosing the simulation. Used for single simulations using specific inputs.
     """
     def __init__(self, parent):
-        wx.Panel.__init__(self, parent)
+        wx.ScrolledWindow.__init__(self, parent)
+        self.SetScrollRate(5,5)
 
         # Populate the locations list with all available locations
         self.locations = [i.lower().capitalize() for i in pd.read_csv(f'Data{os.sep}locations.csv',index_col=0,header=0).NAME.values]
@@ -643,7 +644,7 @@ class SimTab(wx.Panel):
         graph_button_sizer.AddMany([(self.previousgraph_button, 0, wx.ALL), (self.nextgraph_button, 0, wx.ALL),
                                     (self.simulate_button, 0, wx.ALL), (0, 0, 1),(self.save_button, 0, wx.ALL)])
         canvas_sizer.Add(graph_button_sizer, 0, wx.ALL|wx.EXPAND, 2)
-        canvas_sizer.Add(self.canvas, 1, wx.LEFT | wx.TOP | wx.GROW)
+        canvas_sizer.Add(self.canvas, 1, wx.EXPAND)
 
         self.Bind(EVT_SAVEDONE, self.on_savedone)
 
@@ -692,7 +693,7 @@ class SimTab(wx.Panel):
         head_sizer.Add(middle_head_sizer, 0, wx.ALL, 2)
 
         vbox.Add(head_sizer, 0, wx.ALL, 2)
-        vbox.Add(canvas_sizer, 0, wx.ALL|wx.GROW)
+        vbox.Add(canvas_sizer, 1, wx.ALL|wx.GROW)
 
         self.on_location_picked(None)
         self.SetSizer(vbox)
@@ -1384,13 +1385,14 @@ class InputDialog(wx.Dialog):
         file_info = 'Current inputs saved as default.'
         wx.MessageBox(file_info, 'Defaults saved', wx.OK)
 
-class TrainTab(wx.Panel):
+class TrainTab(wx.ScrolledWindow):
     def __init__(self, parent):
         """
             Tab for training the genetic algorithm. 
             Also displays the graphs for corresponding congfiguration.
         """
-        wx.Panel.__init__(self, parent)
+        wx.ScrolledWindow.__init__(self, parent)
+        self.SetScrollRate(5,5)
 
         # Populate list with locations. 
         self.locations = [i.lower().capitalize() for i in pd.read_csv('Data/locations.csv',index_col=0,header=0).NAME.values]
@@ -1551,7 +1553,7 @@ class TrainTab(wx.Panel):
         graph_button_sizer.AddMany([(self.previousgraph_button, 0, wx.ALL, 2), (self.nextgraph_button, 0, wx.ALL, 2),
                                     (0, 0, 1), (self.save_button, 0, wx.ALL, 2)])
         canvas_sizer.Add(graph_button_sizer, 0, wx.ALL|wx.EXPAND, 2)
-        canvas_sizer.Add(self.canvas, 1, wx.LEFT | wx.TOP | wx.GROW)
+        canvas_sizer.Add(self.canvas, 1, wx.GROW)
 
         input_button_sizer.AddMany([(self.input_button, 0, wx.RIGHT, 100), (self.stop_button, 0, wx.RIGHT, 4), 
                                     (self.start_button, 0, wx.RIGHT, 4), (progress_txt, 0, wx.ALL, 2), (self.progress, 1, wx.ALL, 2)])
@@ -1584,7 +1586,7 @@ class TrainTab(wx.Panel):
         vbox.Add(input_button_sizer, 0, wx.ALL, 4)
         vbox.Add(top_sizer, 0, wx.ALL, 2)
 
-        vbox.Add(canvas_sizer, 0, wx.ALL|wx.GROW, 2)
+        vbox.Add(canvas_sizer, 1, wx.ALL|wx.GROW, 2)
 
         self.SetSizer(vbox)
         self.Fit()
@@ -1970,9 +1972,11 @@ class MainFrame(wx.Frame):
         self.Bind(wx.EVT_MENU, self.on_about_request, id=wx.ID_ABOUT)
         self.Bind(wx.EVT_MENU, self.on_turbine_editor, id=wx.ID_EDIT)
 
+
         self.SetSizer(sizer)
         self.Layout()
         self.Fit()
+        self.Maximize(True)
 
     # Small dialog showing about info when about is selected from dropdown.
     def on_about_request(self, id):
