@@ -47,7 +47,7 @@ class Trainer():
         solar_values[:, 2::3] *= (self.orientation_max - self.orientation_min)
         solar_values[:, 2::3] += self.orientation_min
         wind_values = np.random.rand(self.group_size, 1) #only the number of turbines is trained so '1' value
-        wind_values *= self.turbines_max
+        wind_values *= (self.turbines_max -self.turbines_min)
         wind_values += self.turbines_min
         group_values = np.concatenate((solar_values, wind_values), axis=1)  # concatenate on features
 
